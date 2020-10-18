@@ -46,6 +46,7 @@ public class Weapon : MonoBehaviour
             if (Physics.Raycast(rayOrigin,fpsCam.transform.forward, out hit, range))
             {
                 laser.SetPosition(1, hit.point);
+                Debug.Log("Hit something");
             }
             else
             {
