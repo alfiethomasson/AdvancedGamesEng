@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
+using Mirror;
  
-public class PlayerController : MonoBehaviour
+public class PlayerController : NetworkBehaviour
 {
     CharacterController characterController;
     public float MovementSpeed =1;
@@ -14,6 +15,7 @@ public class PlayerController : MonoBehaviour
  
     void Update()
     {
+       // if (!isLocalPlayer) { return; }
         // player movement - forward, backward, left, right
         float horizontal = Input.GetAxis("Horizontal") * MovementSpeed;
         float vertical = Input.GetAxis("Vertical") * MovementSpeed;
