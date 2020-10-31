@@ -1,13 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Mirror;
 using UnityEngine;
 
-public class Weapon : MonoBehaviour
+public class Weapon : NetworkBehaviour
 {
     public int damage = 1;
     public float firerate = 0.5f;
     public float range = 50.0f;
-    public float shotDuration = 0.1f;
+    public float shotDuration = 0.3f;
 
     public Transform muzzle;
 
@@ -19,12 +20,13 @@ public class Weapon : MonoBehaviour
     void Start()
     {
         laser = GetComponent<LineRenderer>();
-        fpsCam = GetComponentInParent<Camera>();
+        fpsCam = GetComponentInChildren<Camera>();
     }
 
     // Update is called once per frame
     void Update()
     {
+       if(!isLocalPlayer) { return;}
        /*  RaycastHit hit;
             laser.SetPosition(0, muzzle.position);
             Vector3 rayOrigin = fpsCam.ViewportToWorldPoint (new Vector3(0.5f, 0.5f, 0.0f));
@@ -36,8 +38,11 @@ public class Weapon : MonoBehaviour
             {
                 laser.SetPosition(1, fpsCam.transform.forward * range);
             }*/
-        if (Input.GetButtonDown ("Fire1") && Time.time > nextShot) 
+
+         //  Debug.Log("HEYEYE"); 
+        if (Input.GetButtonDown ("Fire1") )//&& Time.time > nextShot) 
         {
+          //  Debug.Log("FIRING MY LAZOR!");
             nextShot = Time.time + firerate;
             StartCoroutine(Shot());
             RaycastHit hit;
@@ -46,7 +51,16 @@ public class Weapon : MonoBehaviour
             if (Physics.Raycast(rayOrigin,fpsCam.transform.forward, out hit, range))
             {
                 laser.SetPosition(1, hit.point);
-                Debug.Log("Hit something");
+               // Debug.Log("Hit something");
+                if(hit.collider.tag == "Player")
+                {
+                    Debug.Log("Hit Player");
+                    dealDamage(hit);
+                }
+                else
+                {
+                    Debug.Log("I hit: " + hit.collider.tag);
+                }
             }
             else
             {
@@ -55,10 +69,52 @@ public class Weapon : MonoBehaviour
         }
     }
 
+    public void Fire()
+    {
+            // nextShot = Time.time + firerate;
+            // StartCoroutine(Shot());
+            // RaycastHit hit;
+            // laser.SetPosition(0, muzzle.position);
+            // Vector3 rayOrigin = fpsCam.ViewportToWorldPoint (new Vector3(0.5f, 0.5f, 0.0f));
+            // if (Physics.Raycast(rayOrigin,fpsCam.transform.forward, out hit, range))
+            // {
+            //     laser.SetPosition(1, hit.point);
+            //    // Debug.Log("Hit something");
+            //     if(hit.collider.tag == "Player")
+            //     {
+            //         Debug.Log("Hit Player");
+            //         dealDamage(hit);
+            //     }
+            //     else
+            //     {
+            //         Debug.Log("I hit: " + hit.collider.tag);
+            //     }
+            // }
+            // else
+            // {
+            //     laser.SetPosition(1, fpsCam.transform.forward * range);
+            // }
+    }
+
     private IEnumerator Shot()
     {
         laser.enabled = true;
         yield return shotDuration;
         laser.enabled = false;
+    }
+
+    void dealDamage(RaycastHit hit)
+    {
+       // PlayerController enemy = hit.collider.GetComponentInParent<PlayerController>();
+       GameObject enemy = hit.collider.gameObject;
+       GameObject enemyparent = enemy.transform.parent.gameObject;
+       SendDamage(enemyparent);
+        //enemy.curHP -= 1;
+    }
+
+    [Command]  
+    void SendDamage(GameObject enemy)
+    {
+        enemy.GetComponent<PlayerController>().curHP -= 1;
     }
 }

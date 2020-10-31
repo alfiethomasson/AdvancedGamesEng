@@ -5,22 +5,46 @@ public class PlayerController : NetworkBehaviour
 {
     CharacterController characterController;
     public float MovementSpeed =1;
+    public int MaxHP;
+    [SyncVar]
+    public int curHP;
     public float Gravity = 9.8f;
     private float velocity = 0;
+    private HealthBar hpScript;
+
+    private Weapon weapon;
  
     private void Start()
     {
+        if(!isLocalPlayer) {return;}
         characterController = GetComponent<CharacterController>();
+        hpScript = GameObject.Find("HealthSlider").GetComponent<HealthBar>();
+        hpScript.player = this;
+        weapon = GetComponentInChildren<Weapon>();
+
+        curHP = MaxHP;
     }
  
     void Update()
     {
-       // if (!isLocalPlayer) { return; }
+        if(curHP == 0)
+        {
+            Debug.Log(curHP);
+            Debug.Log("Should die :(");
+            Destroy(this.gameObject);
+        }
+        if (!isLocalPlayer) { return; }
+
         // player movement - forward, backward, left, right
         float horizontal = Input.GetAxis("Horizontal") * MovementSpeed;
         float vertical = Input.GetAxis("Vertical") * MovementSpeed;
-        characterController.Move((Vector3.right * horizontal + Vector3.forward * vertical) * Time.deltaTime);
- 
+        characterController.Move((transform.right * horizontal + transform.forward * vertical) * Time.deltaTime);
+        
+        if(Input.GetButtonDown ("Fire1"))
+        {
+            weapon.Fire();
+        }
+
         // Gravity
         if(characterController.isGrounded)
         {
@@ -30,6 +54,17 @@ public class PlayerController : NetworkBehaviour
         {
             velocity -= Gravity * Time.deltaTime;
             characterController.Move(new Vector3(0, velocity, 0));
+        }
+    }
+
+    public void TakeDamage(int dmg)
+    {
+        //Debug.Log("Taking damage!");
+       // Debug.Log(curHP);
+        curHP -= dmg;
+        if(curHP < 0)
+        {
+            curHP = 0;
         }
     }
 }
