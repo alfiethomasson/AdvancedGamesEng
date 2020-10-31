@@ -53,13 +53,13 @@ public class PlayerNetworked : NetworkBehaviour
         {
         Vector3 newPos = (transform.right * horizontal + transform.forward * vertical) * Time.deltaTime;
         Vector3 lerpedPos = Vector3.Lerp(prevPos, newPos, 0.5f);
-        //float midPos = (newPos + prevPos) / 2;
-        characterController.Move(lerpedPos);
+        ////float midPos = (newPos + prevPos) / 2;
+        characterController.Move(newPos);
         prevPos = newPos;
         }
         else
         {
-            
+
         }
     }
 }
