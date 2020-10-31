@@ -13,7 +13,7 @@ public class MouseHandler : NetworkBehaviour
     private float yRotation = 0.0f;
     private Camera cam;
     private GameObject player;
- 
+    
     void Start()
     {
         cam = this.GetComponentInChildren<Camera>();
@@ -45,6 +45,7 @@ public class MouseHandler : NetworkBehaviour
     void RpcCharacterRotate(float xRotation, float yRotation)
     { 
         Vector3 tempRotation = new Vector3(xRotation, yRotation, 0.0f);
+
         this.transform.eulerAngles = tempRotation;
     }
 }

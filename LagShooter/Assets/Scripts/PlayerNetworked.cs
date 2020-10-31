@@ -18,6 +18,7 @@ public class PlayerNetworked : NetworkBehaviour
     private Vector3 prevPos;
 
     public bool interpolation;
+    Rigidbody rigidbody;
 
     private Weapon weapon;
     // Start is called before the first frame update
@@ -25,6 +26,7 @@ public class PlayerNetworked : NetworkBehaviour
     {
         interpolation = true;
         characterController = GetComponent<CharacterController>();
+        rigidbody = GetComponentInChildren<Rigidbody>();
        // hpScript = GameObject.Find("HealthSlider").GetComponent<HealthBar>();
         //hpScript.player = this
         curHP = MaxHP;
@@ -35,9 +37,11 @@ public class PlayerNetworked : NetworkBehaviour
     void Update()
     {
         if(!isLocalPlayer) {return;}
-        float horizontal = Input.GetAxis("Horizontal") * MovementSpeed;
-        float vertical = Input.GetAxis("Vertical") * MovementSpeed;
-        CmdSendMove(horizontal, vertical);
+        float horizontal = Input.GetAxis("Horizontal");
+        float vertical = Input.GetAxis("Vertical");
+        Vector3 newPos = (transform.right * horizontal + transform.forward * vertical) * Time.deltaTime;
+        characterController.Move(newPos);
+       // CmdSendMove(horizontal, vertical);
     }
 
     [Command]
@@ -54,7 +58,8 @@ public class PlayerNetworked : NetworkBehaviour
         Vector3 newPos = (transform.right * horizontal + transform.forward * vertical) * Time.deltaTime;
         Vector3 lerpedPos = Vector3.Lerp(prevPos, newPos, 0.5f);
         ////float midPos = (newPos + prevPos) / 2;
-        characterController.Move(newPos);
+        //characterController.Move(newPos);
+        rigidbody.MovePosition(newPos.normalized + transform.position * MovementSpeed);
         prevPos = newPos;
         }
         else
