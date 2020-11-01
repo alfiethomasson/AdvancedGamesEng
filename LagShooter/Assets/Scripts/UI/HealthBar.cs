@@ -18,7 +18,7 @@ public class HealthBar : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Debug.Log("Player HP = " + player.curHP);
+      //  Debug.Log("Player HP = " + player.curHP);
         int mappedHP = map(player.curHP, 0, player.MaxHP, 0, 100);
         slider.value = mappedHP;
     }

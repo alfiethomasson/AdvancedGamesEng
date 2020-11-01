@@ -57,7 +57,7 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    public void TakeDamage(int dmg)
+    public bool TakeDamage(int dmg)
     {
         //Debug.Log("Taking damage!");
        // Debug.Log(curHP);
@@ -65,6 +65,14 @@ public class PlayerController : NetworkBehaviour
         if(curHP < 0)
         {
             curHP = 0;
+        }
+        if(curHP == 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
 }

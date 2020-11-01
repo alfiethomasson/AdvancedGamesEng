@@ -138,9 +138,10 @@ GameObject:
   - component: {fileID: 7862551345914443113}
   - component: {fileID: 1401988003}
   - component: {fileID: 8081929768648866791}
-  - component: {fileID: 2058145165727122231}
-  - component: {fileID: 7266160065743549286}
-  - component: {fileID: 5206576393043632003}
+  - component: {fileID: 7053365433093261883}
+  - component: {fileID: 5145122290807465177}
+  - component: {fileID: 5822352529682612115}
+  - component: {fileID: 2213746171716044556}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -220,7 +221,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7862551345914443110}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e47c15be21c4fb74899b33ca06fc8f25, type: 3}
   m_Name: 
@@ -232,7 +233,66 @@ MonoBehaviour:
   range: 50
   shotDuration: 0.3
   muzzle: {fileID: 7862551345485842906}
---- !u!120 &2058145165727122231
+--- !u!114 &7053365433093261883
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7862551345914443110}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8729417543849e84a9e58a0a3ba27da8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncMode: 0
+  syncInterval: 0.1
+  MovementSpeed: 3
+  MaxHP: 5
+  curHP: 5
+  Gravity: 9.8
+--- !u!114 &5145122290807465177
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7862551345914443110}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6eab197ff4b6f5b4a85f95c9c44e7a48, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncMode: 0
+  syncInterval: 0.1
+  curTransform: {fileID: 7862551345914443115}
+  normLerpRate: 15
+  fastLerpRate: 25
+  threshold: 0.2
+  useHistoricalLerp: 1
+  useDeadReckoning: 0
+--- !u!114 &5822352529682612115
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7862551345914443110}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42f8d45e8df980a48bce957f21d4f1e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncMode: 0
+  syncInterval: 0.1
+  curTransform: {fileID: 7862551345914443115}
+  camTransform: {fileID: 7862551345997561938}
+  normalLerpRate: 50
+  fasterLerpRate: 100
+  threshold: 1
+  closeness: 0.5
+  useHistoricalLerp: 1
+--- !u!120 &2213746171716044556
 LineRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -330,43 +390,6 @@ LineRenderer:
     generateLightingData: 0
   m_UseWorldSpace: 1
   m_Loop: 0
---- !u!114 &7266160065743549286
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7862551345914443110}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 830d74f037f7d47459a848dab6efa201, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  syncMode: 0
-  syncInterval: 0.1
-  MovementSpeed: 3
-  MaxHP: 0
-  curHP: 0
-  Gravity: 9.8
-  interpolation: 0
---- !u!114 &5206576393043632003
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7862551345914443110}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2f74aedd71d9a4f55b3ce499326d45fb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  syncMode: 0
-  syncInterval: 0.1
-  clientAuthority: 0
-  localPositionSensitivity: 0.01
-  localRotationSensitivity: 0.01
-  localScaleSensitivity: 0.01
 --- !u!1 &7862551345997561937
 GameObject:
   m_ObjectHideFlags: 0
@@ -610,7 +633,7 @@ GameObject:
   - component: {fileID: 7862551347074324370}
   m_Layer: 0
   m_Name: PlayerBody
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -657,7 +680,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: a3eb8d2bf7f651e408effbf04418aeb5, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

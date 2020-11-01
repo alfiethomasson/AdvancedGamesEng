@@ -31,7 +31,8 @@ public class MouseHandler : NetworkBehaviour
         xRotation = Mathf.Clamp(xRotation, -90, 90);
  
         cam.transform.eulerAngles = new Vector3(xRotation, yRotation, 0.0f);
-        CmdSendRotate(xRotation, yRotation);
+        this.transform.rotation = cam.transform.rotation;
+       // CmdSendRotate(xRotation, yRotation);
      // player.transform.eulerAngles = new Vector3(xRotation, 0.0f, 0.0f);
     }
 

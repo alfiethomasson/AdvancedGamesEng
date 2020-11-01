@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Mirror;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Weapon : NetworkBehaviour
 {
@@ -15,12 +16,16 @@ public class Weapon : NetworkBehaviour
     private Camera fpsCam;
     private LineRenderer laser;
     private float nextShot;
+    private float killcounter = 0;
+
+    private Text killText;
 
     // Start is called before the first frame update
     void Start()
     {
         laser = GetComponent<LineRenderer>();
         fpsCam = GetComponentInChildren<Camera>();
+        killText = GameObject.Find("KillCounter").GetComponent<Text>();
     }
 
     // Update is called once per frame
@@ -115,6 +120,11 @@ public class Weapon : NetworkBehaviour
     [Command]  
     void SendDamage(GameObject enemy)
     {
-        enemy.GetComponent<PlayerController>().curHP -= 1;
+        bool isKill = enemy.GetComponent<PlayerController>().TakeDamage(1);
+        if(isKill)
+        {
+            killcounter++;
+            killText.text = killcounter.ToString();
+        }
     }
 }
