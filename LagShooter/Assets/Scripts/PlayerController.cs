@@ -4,11 +4,15 @@ using Mirror;
 public class PlayerController : NetworkBehaviour
 {
     CharacterController characterController;
+
+    [SerializeField]
+    private Transform myTransform;
+
     public float MovementSpeed =1;
     public int MaxHP;
     [SyncVar]
     public int curHP;
-    public float Gravity = 9.8f;
+    public float Gravity = 0f;
     private float velocity = 0;
     private HealthBar hpScript;
 
@@ -27,13 +31,19 @@ public class PlayerController : NetworkBehaviour
  
     void Update()
     {
+        if (!isLocalPlayer) { return; }
         if(curHP == 0)
         {
             Debug.Log(curHP);
             Debug.Log("Should die :(");
-            Destroy(this.gameObject);
+            int ranSpawn = Random.Range(0, 3);
+            ranSpawn++;
+            GameObject resp = GameObject.Find("Respawn" + ranSpawn.ToString());
+            myTransform.position = resp.transform.position;
+            Debug.Log("Going to: " + resp.transform.position);
+            Debug.Log("This transform: " + this.transform.position);
+            curHP = MaxHP;
         }
-        if (!isLocalPlayer) { return; }
 
         // player movement - forward, backward, left, right
         float horizontal = Input.GetAxis("Horizontal") * MovementSpeed;
@@ -59,8 +69,6 @@ public class PlayerController : NetworkBehaviour
 
     public bool TakeDamage(int dmg)
     {
-        //Debug.Log("Taking damage!");
-       // Debug.Log(curHP);
         curHP -= dmg;
         if(curHP < 0)
         {

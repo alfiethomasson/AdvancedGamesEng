@@ -16,6 +16,11 @@ public class MouseHandler : NetworkBehaviour
     
     void Start()
     {
+        if(isLocalPlayer)
+        {
+        Camera serverCam = GameObject.Find("ServerCam").GetComponent<Camera>();
+        serverCam.enabled = false;
+        }
         cam = this.GetComponentInChildren<Camera>();
        // player = this.gameObject;
     }

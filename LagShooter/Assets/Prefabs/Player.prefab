@@ -157,7 +157,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7862551345914443110}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.88, y: 2.79, z: 0}
+  m_LocalPosition: {x: -3.88, y: 1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 7862551347074324375}
@@ -247,6 +247,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
+  myTransform: {fileID: 7862551345914443115}
   MovementSpeed: 3
   MaxHP: 5
   curHP: 5
@@ -266,11 +267,14 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0.1
   curTransform: {fileID: 7862551345914443115}
+  moveSpeed: 3
   normLerpRate: 15
   fastLerpRate: 25
   threshold: 0.2
-  useHistoricalLerp: 1
+  useAutomaticToggle: 0
+  useHistoricalLerp: 0
   useDeadReckoning: 0
+  useInterpolation: 0
 --- !u!114 &5822352529682612115
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -291,7 +295,8 @@ MonoBehaviour:
   fasterLerpRate: 100
   threshold: 1
   closeness: 0.5
-  useHistoricalLerp: 1
+  useHistoricalLerp: 0
+  useInterpolation: 0
 --- !u!120 &2213746171716044556
 LineRenderer:
   m_ObjectHideFlags: 0
@@ -633,7 +638,7 @@ GameObject:
   - component: {fileID: 7862551347074324370}
   m_Layer: 0
   m_Name: PlayerBody
-  m_TagString: Untagged
+  m_TagString: PlayerBody
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

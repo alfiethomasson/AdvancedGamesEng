@@ -21,8 +21,8 @@ public class HistoricalLerpToggle : MonoBehaviour
 
         foreach(GameObject player in players)
         {
-            player.GetComponent<SyncPosition>().RpcChangeHistoricalLerp();
-            player.GetComponent<SyncRotation>().RpcChangeHistoricalLerp();
+            player.GetComponent<SyncPosition>().RpcChangeHistoricalLerp(myToggle.isOn);
+            player.GetComponent<SyncRotation>().RpcChangeHistoricalLerp(myToggle.isOn);
         }
     }
 }

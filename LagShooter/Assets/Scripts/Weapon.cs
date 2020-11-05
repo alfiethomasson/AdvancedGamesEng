@@ -25,7 +25,6 @@ public class Weapon : NetworkBehaviour
     {
         laser = GetComponent<LineRenderer>();
         fpsCam = GetComponentInChildren<Camera>();
-        killText = GameObject.Find("KillCounter").GetComponent<Text>();
     }
 
     // Update is called once per frame
@@ -44,7 +43,7 @@ public class Weapon : NetworkBehaviour
                 laser.SetPosition(1, fpsCam.transform.forward * range);
             }*/
 
-         //  Debug.Log("HEYEYE"); 
+        //Fire weapon!
         if (Input.GetButtonDown ("Fire1") )//&& Time.time > nextShot) 
         {
           //  Debug.Log("FIRING MY LAZOR!");
@@ -56,8 +55,7 @@ public class Weapon : NetworkBehaviour
             if (Physics.Raycast(rayOrigin,fpsCam.transform.forward, out hit, range))
             {
                 laser.SetPosition(1, hit.point);
-               // Debug.Log("Hit something");
-                if(hit.collider.tag == "Player")
+                if(hit.collider.tag == "PlayerBody")
                 {
                     Debug.Log("Hit Player");
                     dealDamage(hit);
@@ -113,10 +111,13 @@ public class Weapon : NetworkBehaviour
        // PlayerController enemy = hit.collider.GetComponentInParent<PlayerController>();
        GameObject enemy = hit.collider.gameObject;
        GameObject enemyparent = enemy.transform.parent.gameObject;
+       killcounter++;
+       GameObject.Find("HitCounter").GetComponent<Text>().text = killcounter.ToString();
        SendDamage(enemyparent);
         //enemy.curHP -= 1;
     }
 
+    //Sends command to all instances of the player
     [Command]  
     void SendDamage(GameObject enemy)
     {
@@ -124,6 +125,7 @@ public class Weapon : NetworkBehaviour
         if(isKill)
         {
             killcounter++;
+            killText = GameObject.Find("KillCounter").GetComponent<Text>();
             killText.text = killcounter.ToString();
         }
     }

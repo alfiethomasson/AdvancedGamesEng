@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Mirror;
+using UnityEngine.UI;
 
 public class SyncPosition : NetworkBehaviour
 {
@@ -11,6 +12,9 @@ public class SyncPosition : NetworkBehaviour
 
     [SerializeField]
     Transform curTransform;
+
+    [SerializeField]
+    private float moveSpeed = 1;
 
     float lerpRate;
 
@@ -28,11 +32,15 @@ public class SyncPosition : NetworkBehaviour
 
     [SyncVar]
     [SerializeField]
+    private bool useAutomaticToggle = false;
+
+    [SyncVar]
+    [SerializeField]
     private bool useHistoricalLerp = false;
 
     [SyncVar]
     [SerializeField]
-    private bool useDeadReckoning = false;
+    private bool useDeadReckoning = true;
 
     [SyncVar]
     [SerializeField]
@@ -40,20 +48,57 @@ public class SyncPosition : NetworkBehaviour
 
     private float closeness = 0.1f;
 
+    [SyncVar]
+    private Vector3 pastMove;
+
+    NetworkPingDisplay networkPingDisplay;
+
     void Start()
     {
         lerpRate = normLerpRate;
+        networkPingDisplay = GameObject.Find("Network Manager").GetComponent<NetworkPingDisplay>();
     }
 
     // Update is called once per frame
     void Update()
     {
         LerpPosition();
+        if(useAutomaticToggle)
+        {
+        CheckPing();
+        }
     }
 
     void FixedUpdate()
     {
         RpcSendToClient();
+    }
+
+    //If automatic is selected
+    void CheckPing()
+    {
+        //Check if ping is over 100
+        if((NetworkTime.rtt * 1000) > 100)
+        {
+            //If it is, turn extrapolation on 
+           if(!useDeadReckoning)
+           {
+                CmdChangeExtrapolation(true);
+               // CmdChangeHistoricalLerp(false);
+           }
+         //  Debug.Log("Above 100");
+        }
+        else if(NetworkTime.rtt * 1000 < 100) // If ping below 100
+        {
+            if(useDeadReckoning) // Then turn extrapolation off
+            {
+                CmdChangeExtrapolation(false);
+                //CmdChangeHistoricalLerp(true);
+            }
+            Debug.Log("Below 100");
+        }
+        Debug.Log("Extrapolation on = " +  useDeadReckoning);
+        //Debug.Log("Network Time rtt * 1000 = " + (NetworkTime.rtt * 1000));
     }
 
     void LerpPosition()
@@ -75,11 +120,25 @@ public class SyncPosition : NetworkBehaviour
     {
         if(useInterpolation)
         {
-        curTransform.position = Vector3.Lerp(curTransform.position, syncPos, Time.deltaTime * lerpRate);
+            if(useDeadReckoning)
+            {
+                
+               // curTransform.position = Vector3.Lerp(curTransform.position, syncPos + pastMove, Time.deltaTime * lerpRate);
+                //curTransform.position = Vector3.Lerp(curTransform.position, syncPos + (pastMove * moveSpeed * Time.deltaTime), Time.deltaTime * lerpRate);
+                curTransform.position = Vector3.Lerp(curTransform.position, curTransform.position + (pastMove * moveSpeed * Time.deltaTime), Time.deltaTime * lerpRate);
+            }
+            else
+            {
+                curTransform.position = Vector3.Lerp(curTransform.position, syncPos, Time.deltaTime * lerpRate);
+            }
         }
         else
         {
             curTransform.position = syncPos;
+        }
+        if(useDeadReckoning)
+        {
+            //curTransform.position += (pastMove * moveSpeed * Time.deltaTime);
         }
     }
 
@@ -117,15 +176,38 @@ public class SyncPosition : NetworkBehaviour
     void CmdSendPosition(Vector3 pos)
     {
         syncPos = pos;
+        pastMove = syncPos - curTransform.position;
+        if(useHistoricalLerp)
+        {
+            syncPosList.Add(pos);
+        }
+       // pastMove = new Vector3(pastMove.x, 0, pastMove.z);
+        //Debug.Log(pastMove);
+        //lastPos = syncPos - curTransform.position;
     }
     
     [ClientRpc]
     void RpcSendToClient()
     {
-        if(isLocalPlayer && Vector3.Distance(curTransform.position, lastPos) > threshold)
+        if(isLocalPlayer)
+        {
+        if(!useDeadReckoning)
+        {
+        if(Vector3.Distance(curTransform.position, lastPos) > threshold)
         {
             CmdSendPosition(curTransform.position);
             lastPos = curTransform.position;
+        }
+        }
+        else
+        {
+            CmdSendPosition(curTransform.position);
+            lastPos = curTransform.position;
+        }
+        //else if(pastMove)
+        //{
+         //  CmdSendPosition(new Vector3(0, 0, 0));
+       // }
         }
     }
 
@@ -133,25 +215,119 @@ public class SyncPosition : NetworkBehaviour
     void RpcSyncPosValues(Vector3 oldPos, Vector3 recentPos)
     {
         syncPos = recentPos;
+        //pastMove = syncPos - oldPos;
+        if(useHistoricalLerp)
+        {
         syncPosList.Add(syncPos);
+        }
     }
 
     [ClientRpc]
-    public void RpcChangeHistoricalLerp()
+    public void RpcChangeHistoricalLerp(bool isOn)
     {
-        if(isLocalPlayer)
+        if(!isLocalPlayer)
         {
         syncPosList.Clear();
-        useHistoricalLerp = !useHistoricalLerp;
+        useHistoricalLerp = isOn;
+        Debug.Log("Calling on this client!");
+        }
+        else
+        {
+            //Debug.Log("Calling on this client!");
+            CmdChangeHistoricalLerp(isOn);
+            Toggle tog = GameObject.Find("HistoricalLerp").GetComponent<Toggle>();
+            tog.isOn = isOn;
         }
     }
 
     [ClientRpc]
-    public void RpcChangeInterpolation()
+    public void RpcChangeInterpolation(bool isOn)
     {
-        if(isLocalPlayer)
+        if(!isLocalPlayer)
         {
-        useInterpolation = !useInterpolation;
+            Debug.Log("Calling on this client!");
+            useInterpolation = isOn;
         }
+        else
+        {
+           // Debug.Log("Calling on this client!");
+           CmdChangeInterpolation(isOn);
+           Toggle tog = GameObject.Find("Interpolation").GetComponent<Toggle>();
+           tog.isOn = isOn;
+        }
+    }
+
+    [ClientRpc]
+    public void RpcChangeExtrapolation(bool isOn)
+    {
+        if(!isLocalPlayer)
+        {
+            Debug.Log("Calling on this client!");
+            useDeadReckoning = isOn;
+        }
+        else
+        {
+            //Debug.Log("Calling on this client!");
+            CmdChangeExtrapolation(isOn);
+            Toggle tog = GameObject.Find("Extrapolation").GetComponent<Toggle>();
+           tog.isOn = isOn;
+        }
+    }
+
+    [ClientRpc]
+    public void RpcChangeAutomatic(bool isOn)
+    {
+        if(!isLocalPlayer)
+        {
+            Debug.Log("Calling on this client!");
+            useAutomaticToggle = isOn;
+            if(useAutomaticToggle)
+            {
+                useDeadReckoning = false;
+                useHistoricalLerp = false;
+                useInterpolation = true;
+            }
+        }
+        else
+        {
+            //Debug.Log("Calling on this client!");
+            CmdChangeAutomatic(isOn);
+            CmdChangeInterpolation(isOn);
+           // CmdChangeHistoricalLerp(isOn);
+            Toggle tog = GameObject.Find("Automatic").GetComponent<Toggle>();
+            tog.isOn = isOn;
+        }
+    }
+
+    [Command]
+    public void CmdChangeHistoricalLerp(bool isOn)
+    {
+        useHistoricalLerp = isOn;
+        Toggle tog = GameObject.Find("HistoricalLerp").GetComponent<Toggle>();
+            tog.isOn = isOn;
+    }
+
+    [Command]
+    public void CmdChangeInterpolation(bool isOn)
+    {
+        useInterpolation = isOn;
+        Toggle tog = GameObject.Find("Interpolation").GetComponent<Toggle>();
+            tog.isOn = isOn;
+    }
+
+    [Command]
+    public void CmdChangeExtrapolation(bool isOn)
+    {
+        useDeadReckoning = isOn;
+        Toggle tog = GameObject.Find("Extrapolation").GetComponent<Toggle>();
+            tog.isOn = isOn;
+    }
+
+    [Command]
+    public void CmdChangeAutomatic(bool isOn)
+    {
+        useAutomaticToggle = isOn;
+        Toggle tog = GameObject.Find("Automatic").GetComponent<Toggle>();
+        tog.isOn = isOn;
     }
 }

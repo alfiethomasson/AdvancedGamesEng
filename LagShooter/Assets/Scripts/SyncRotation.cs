@@ -81,7 +81,7 @@ public class SyncRotation : NetworkBehaviour
 
     void HistoricalLerp()
     {
-        //Debug.Log(syncPlayerRotationList.Count + "  Player Rotation List");
+        Debug.Log(syncPlayerRotationList.Count + "  Player Rotation List");
         if(syncPlayerRotationList.Count > 0)
         {
             LerpPlayerRot(syncPlayerRotationList[0]);
@@ -100,7 +100,7 @@ public class SyncRotation : NetworkBehaviour
             }
         }
 
-       // Debug.Log(syncCamRotList.Count + "  Camera Rotation List");
+        Debug.Log(syncCamRotList.Count + "  Camera Rotation List");
         if(syncCamRotList.Count > 0)
         {
             LerpCamRot(syncCamRotList[0]);
@@ -114,7 +114,7 @@ public class SyncRotation : NetworkBehaviour
     void NormalLerp()
     {
         LerpPlayerRot(syncPlayerRotation);
-        LerpCamRot(syncCamRotation);
+       // LerpCamRot(syncCamRotation);
     }
 
     void LerpPlayerRot(float newRot)
@@ -135,11 +135,11 @@ public class SyncRotation : NetworkBehaviour
         Vector3 camNewRot = new Vector3(newRot, 0, 0);
         if(useInterpolation)
         {
-        camTransform.localRotation = Quaternion.Lerp(camTransform.localRotation, Quaternion.Euler(camNewRot), Time.deltaTime * lerpRate);
+       // camTransform.localRotation = Quaternion.Lerp(camTransform.localRotation, Quaternion.Euler(camNewRot), Time.deltaTime * lerpRate);
         }
         else
         {
-            camTransform.rotation = Quaternion.Euler(camNewRot);
+           // camTransform.rotation = Quaternion.Euler(camNewRot);
         }
     }
 
@@ -181,8 +181,12 @@ public class SyncRotation : NetworkBehaviour
     [ClientRpc]
     void RpcPlayerRotationSync(float oldrot, float newrot)
     {
+        Debug.Log("Rotate called");
         syncPlayerRotation = newrot;
+        if(useHistoricalLerp)
+        {
         syncPlayerRotationList.Add(syncPlayerRotation);
+        }
        //  Debug.Log("Player List Count = " + syncCamRotList.Count);
     }
 
@@ -190,27 +194,39 @@ public class SyncRotation : NetworkBehaviour
     void RpcCamRotationSync(float oldrot, float newrot)
     {
         syncCamRotation = newrot;
+        if(useHistoricalLerp)
+        {
         syncCamRotList.Add(syncCamRotation);
+        }
        // Debug.Log("Cam List Count = " + syncCamRotList.Count);
     }
 
     [ClientRpc]
-    public void RpcChangeHistoricalLerp()
+    public void RpcChangeHistoricalLerp(bool isOn)
     {
-        if(isLocalPlayer)
+        if(!isLocalPlayer)
         {
         syncPlayerRotationList.Clear();
         syncCamRotList.Clear();
-        useHistoricalLerp = !useHistoricalLerp;
+        useHistoricalLerp = isOn;
         }
     }
 
     [ClientRpc]
-    public void RpcChangeInterpolation()
+    public void RpcChangeInterpolation(bool isOn)
     {
-        if(isLocalPlayer)
+        if(!isLocalPlayer)
         {
-        useInterpolation = !useInterpolation;
+        useInterpolation = isOn;    
         }
     }
+
+    // [ClientRpc]
+    // public void RpcChangeExtrapolation()
+    // {
+    //     if(isLocalPlayer)
+    //     {
+    //     = !useInterpolation;
+    //     }
+    // }
 }

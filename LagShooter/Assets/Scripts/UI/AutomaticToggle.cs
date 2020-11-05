@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class InterpolationToggle : MonoBehaviour
+public class AutomaticToggle : MonoBehaviour
 {
 
     Toggle myToggle;
@@ -21,8 +21,8 @@ public class InterpolationToggle : MonoBehaviour
 
         foreach(GameObject player in players)
         {
-            player.GetComponent<SyncPosition>().RpcChangeInterpolation(myToggle.isOn);
-            player.GetComponent<SyncRotation>().RpcChangeInterpolation(myToggle.isOn);
+            player.GetComponent<SyncPosition>().RpcChangeAutomatic(myToggle.isOn);
+           // player.GetComponent<SyncRotation>().RpcChangeInterpolation();
         }
     }
 }

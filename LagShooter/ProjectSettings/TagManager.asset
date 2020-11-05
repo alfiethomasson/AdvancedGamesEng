@@ -6,6 +6,7 @@ TagManager:
   tags:
   - PCam
   - Destructible
+  - PlayerBody
   layers:
   - Default
   - TransparentFX
