@@ -32,18 +32,18 @@ public class PlayerController : NetworkBehaviour
     void Update()
     {
         if (!isLocalPlayer) { return; }
-        if(curHP == 0)
-        {
-            Debug.Log(curHP);
-            Debug.Log("Should die :(");
-            int ranSpawn = Random.Range(0, 3);
-            ranSpawn++;
-            GameObject resp = GameObject.Find("Respawn" + ranSpawn.ToString());
-            myTransform.position = resp.transform.position;
-            Debug.Log("Going to: " + resp.transform.position);
-            Debug.Log("This transform: " + this.transform.position);
-            curHP = MaxHP;
-        }
+        // if(curHP == 0)
+        // {
+        //     Debug.Log(curHP);
+        //     Debug.Log("Should die :(");
+        //     int ranSpawn = Random.Range(0, 3);
+        //     ranSpawn++;
+        //     GameObject resp = GameObject.Find("Respawn" + ranSpawn.ToString());
+        //     myTransform.position = resp.transform.position;
+        //     Debug.Log("Going to: " + resp.transform.position);
+        //     Debug.Log("This transform: " + this.transform.position);
+        //     curHP = MaxHP;
+        // }
 
         // player movement - forward, backward, left, right
         float horizontal = Input.GetAxis("Horizontal") * MovementSpeed;
@@ -67,8 +67,9 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    public bool TakeDamage(int dmg)
+    public void TakeDamage(int dmg)
     {
+        if(!isServer) {return;}
         curHP -= dmg;
         if(curHP < 0)
         {
@@ -76,11 +77,30 @@ public class PlayerController : NetworkBehaviour
         }
         if(curHP == 0)
         {
-            return true;
+            RpcRespawn();
+            return;
         }
         else
         {
-            return false;
+            return;
+        }
+    }
+
+    public override void OnStartLocalPlayer()
+    {
+        GetComponent<MeshRenderer>().material.color = Color.blue;
+    }
+
+    [ClientRpc]
+    void RpcRespawn()
+    {
+        if(isLocalPlayer)
+        {
+           // transform.position = Vector3.zero;
+            int ranSpawn = Random.Range(0, 3);
+             ranSpawn++;
+             GameObject resp = GameObject.Find("Respawn" + ranSpawn.ToString());
+             transform.position = resp.transform.position;
         }
     }
 }

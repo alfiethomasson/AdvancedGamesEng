@@ -1300,7 +1300,7 @@ PrefabInstance:
     - target: {fileID: 5434966329381757587, guid: a1165f7400e23a5428293cdba971dabb,
         type: 3}
       propertyPath: networkAddress
-      value: localhost
+      value: 192.168.1.161
       objectReference: {fileID: 0}
     - target: {fileID: 5434966329381757587, guid: a1165f7400e23a5428293cdba971dabb,
         type: 3}
@@ -1316,6 +1316,11 @@ PrefabInstance:
         type: 3}
       propertyPath: spawnPrefabs.Array.data[0]
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5434966329381757587, guid: a1165f7400e23a5428293cdba971dabb,
+        type: 3}
+      propertyPath: offlineScene
+      value: Assets/Scenes/UIScene.unity
       objectReference: {fileID: 0}
     - target: {fileID: 5434966329381757590, guid: a1165f7400e23a5428293cdba971dabb,
         type: 3}

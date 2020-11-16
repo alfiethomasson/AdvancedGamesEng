@@ -13,11 +13,15 @@ public class Weapon : NetworkBehaviour
 
     public Transform muzzle;
 
+    [SyncVar]
+    Vector3 rayPoint;
+    [SyncVar]
+    bool rayActive;
+
     private Camera fpsCam;
     private LineRenderer laser;
     private float nextShot;
     private float killcounter = 0;
-
     private Text killText;
 
     // Start is called before the first frame update
@@ -30,7 +34,7 @@ public class Weapon : NetworkBehaviour
     // Update is called once per frame
     void Update()
     {
-       if(!isLocalPlayer) { return;}
+       if(!isLocalPlayer) { Debug.Log(laser.enabled); return;}
        /*  RaycastHit hit;
             laser.SetPosition(0, muzzle.position);
             Vector3 rayOrigin = fpsCam.ViewportToWorldPoint (new Vector3(0.5f, 0.5f, 0.0f));
@@ -50,15 +54,51 @@ public class Weapon : NetworkBehaviour
             nextShot = Time.time + firerate;
             StartCoroutine(Shot());
             RaycastHit hit;
-            laser.SetPosition(0, muzzle.position);
+          //  laser.SetPosition(0, muzzle.position);
             Vector3 rayOrigin = fpsCam.ViewportToWorldPoint (new Vector3(0.5f, 0.5f, 0.0f));
-            if (Physics.Raycast(rayOrigin,fpsCam.transform.forward, out hit, range))
+            CmdCheckShot();
+            // if (Physics.Raycast(rayOrigin,fpsCam.transform.forward, out hit, range))
+            // {
+            //     laser.SetPosition(1, hit.point);
+            //     if(hit.collider.tag == "PlayerBody")
+            //     {
+            //         Debug.Log("Hit Player");
+            //         dealDamage(hit);
+            //     }
+            //     else
+            //     {
+            //         Debug.Log("I hit: " + hit.collider.tag);
+            //     }
+            // }
+            // else
+            // {
+            //     laser.SetPosition(1, fpsCam.transform.forward * range);
+            // }
+        }
+    }
+
+    [Command]
+    public void CmdCheckShot()
+    {
+        RaycastHit hit;
+        // laser.SetPosition(0, muzzle.position);
+        Vector3 rayOrigin = fpsCam.ViewportToWorldPoint (new Vector3(0.5f, 0.5f, 0.0f));
+
+
+         if (Physics.Raycast(rayOrigin,fpsCam.transform.forward, out hit, range))
             {
-                laser.SetPosition(1, hit.point);
+               // Debug.DrawRay(rayOrigin, fpsCam.transform.forward, Color.green, 1);
+                //laser.SetPosition(1, hit.point);
+              // RpcShowLine(hit.transform.position);
+              laser.SetPosition(0, muzzle.position);
+              RpcShowLine(hit.point);
                 if(hit.collider.tag == "PlayerBody")
                 {
                     Debug.Log("Hit Player");
-                    dealDamage(hit);
+                   // dealDamage(hit);
+                   GameObject enemy = hit.collider.gameObject;
+                   PlayerController enemyController = enemy.GetComponentInParent<PlayerController>();
+                   enemyController.TakeDamage(1);
                 }
                 else
                 {
@@ -67,10 +107,36 @@ public class Weapon : NetworkBehaviour
             }
             else
             {
-                laser.SetPosition(1, fpsCam.transform.forward * range);
+              //  RpcShowLine(hit.transform.position);
+                //laser.SetPosition(1, fpsCam.transform.forward * range);
+                RpcShowLine(fpsCam.transform.forward * range);
+              //  RpcShowLine(fpsCam.transform.forward * range);
             }
-        }
     }
+
+    [ClientRpc]
+    private void RpcClientLine()
+    {
+        laser.SetPosition(0, muzzle.position);
+        laser.SetPosition(1, rayPoint);
+        waitShot();
+    }
+
+    [Server]
+    public void RpcShowLine(Vector3 hitPos)
+    {
+       // rayPoint = hitPos;
+         rayPoint = hitPos;
+        laser.SetPosition(1, hitPos);
+        RpcClientLine();
+    }
+
+    private IEnumerator waitShot()
+    {
+        laser.enabled = true;
+        yield return shotDuration;
+        laser.enabled = false;
+    } 
 
     public void Fire()
     {
@@ -101,7 +167,8 @@ public class Weapon : NetworkBehaviour
 
     private IEnumerator Shot()
     {
-        laser.enabled = true;
+
+        //laser.enabled = true;
         yield return shotDuration;
         laser.enabled = false;
     }
@@ -121,12 +188,12 @@ public class Weapon : NetworkBehaviour
     [Command]  
     void SendDamage(GameObject enemy)
     {
-        bool isKill = enemy.GetComponent<PlayerController>().TakeDamage(1);
-        if(isKill)
-        {
-            killcounter++;
-            killText = GameObject.Find("KillCounter").GetComponent<Text>();
-            killText.text = killcounter.ToString();
-        }
+        // bool isKill = enemy.GetComponent<PlayerController>().TakeDamage(1);
+        // if(isKill)
+        // {
+        //     killcounter++;
+        //     killText = GameObject.Find("KillCounter").GetComponent<Text>();
+        //     killText.text = killcounter.ToString();
+        // }
     }
 }
