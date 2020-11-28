@@ -34,7 +34,8 @@ public class JoinLobbyMenu : MonoBehaviour
         string ipaddress = ipInputField.text;
 
         networkManager.networkAddress = ipaddress;
-        networkManager.OnStartClient();
+        Debug.Log("Read IP address as: " + ipaddress);
+        networkManager.StartClient();
 
         joinButton.interactable = false;
     }

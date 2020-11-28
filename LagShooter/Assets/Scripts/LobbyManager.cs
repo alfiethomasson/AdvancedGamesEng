@@ -36,6 +36,7 @@ public class LobbyManager : NetworkManager
 
     public override void OnClientConnect(NetworkConnection connection)
     {
+        Debug.Log("Client Attempting to Connect");
         base.OnClientConnect(connection);
 
         OnClientConnected?.Invoke();

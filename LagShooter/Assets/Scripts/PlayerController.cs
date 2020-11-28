@@ -32,6 +32,11 @@ public class PlayerController : NetworkBehaviour
     void Update()
     {
         if (!isLocalPlayer) { return; }
+        if(curHP == 0)
+        {
+            CmdRespawn();
+            return;
+        }
         // if(curHP == 0)
         // {
         //     Debug.Log(curHP);
@@ -75,15 +80,15 @@ public class PlayerController : NetworkBehaviour
         {
             curHP = 0;
         }
-        if(curHP == 0)
-        {
-            RpcRespawn();
-            return;
-        }
-        else
-        {
-            return;
-        }
+        // if(curHP == 0)
+        // {
+        //     CmdRespawn();
+        //     return;
+        // }
+        // else
+        // {
+        //     return;
+        // }
     }
 
     public override void OnStartLocalPlayer()
@@ -91,9 +96,17 @@ public class PlayerController : NetworkBehaviour
         GetComponent<MeshRenderer>().material.color = Color.blue;
     }
 
+    [Command]
+    void CmdRespawn()
+    {
+        curHP = MaxHP;
+        RpcRespawn();
+    }
+
     [ClientRpc]
     void RpcRespawn()
     {
+        curHP = MaxHP;
         if(isLocalPlayer)
         {
            // transform.position = Vector3.zero;
