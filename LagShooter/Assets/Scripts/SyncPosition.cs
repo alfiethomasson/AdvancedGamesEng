@@ -126,6 +126,7 @@ public class SyncPosition : NetworkBehaviour
                // curTransform.position = Vector3.Lerp(curTransform.position, syncPos + pastMove, Time.deltaTime * lerpRate);
                 //curTransform.position = Vector3.Lerp(curTransform.position, syncPos + (pastMove * moveSpeed * Time.deltaTime), Time.deltaTime * lerpRate);
                 curTransform.position = Vector3.Lerp(curTransform.position, curTransform.position + (pastMove * moveSpeed * Time.deltaTime), Time.deltaTime * lerpRate);
+                pastMove += (pastMove * moveSpeed * Time.deltaTime);
             }
             else
             {
