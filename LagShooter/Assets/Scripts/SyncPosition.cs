@@ -185,10 +185,10 @@ public class SyncPosition : NetworkBehaviour
     {
         syncPos = pos;
         pastMove = syncPos - curTransform.position;
-        if(useHistoricalLerp)
-        {
-            syncPosList.Add(pos);
-        }
+        // if(useHistoricalLerp)
+        // {
+        //     syncPosList.Add(pos);
+        // }
        // pastMove = new Vector3(pastMove.x, 0, pastMove.z);
         //Debug.Log(pastMove);
         //lastPos = syncPos - curTransform.position;
@@ -224,10 +224,10 @@ public class SyncPosition : NetworkBehaviour
     {
         syncPos = recentPos;
         //pastMove = syncPos - oldPos;
-        if(useHistoricalLerp)
-        {
-        syncPosList.Add(syncPos);
-        }
+        // if(useHistoricalLerp)
+        // {
+        // syncPosList.Add(syncPos);
+        // }
     }
 
     [ClientRpc]
@@ -236,7 +236,7 @@ public class SyncPosition : NetworkBehaviour
         if(!isLocalPlayer)
         {
         syncPosList.Clear();
-        useHistoricalLerp = isOn;
+      //  useHistoricalLerp = isOn;
         Debug.Log("Calling on this client!");
         }
         else

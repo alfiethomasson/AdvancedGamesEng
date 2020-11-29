@@ -20,8 +20,13 @@ public class LobbyManager : NetworkManager
     [SerializeField]
     private NetworkGamePlayerLobby gamePlayerPrefab = null;
     
+    [SerializeField]
+    private GameObject spawnSystem = null;
+    
     public static event Action OnClientConnected;
     public static event Action OnClientDisconnected;
+    public static event Action<NetworkConnection> OnServerReadied;
+
 
     public List<NetworkRoomPlayerLobby> RoomPlayers {get;} = new List<NetworkRoomPlayerLobby>();
     public List<NetworkGamePlayerLobby> GamePlayers {get;} = new List<NetworkGamePlayerLobby>();
@@ -156,39 +161,24 @@ public class LobbyManager : NetworkManager
 
                 NetworkServer.ReplacePlayerForConnection(connection, gameplayerInstance.gameObject, true);
             }
-            // Debug.Log("Room players count = " + RoomPlayers.Count);
-            // for(int i = 0; i < RoomPlayers.Count; i++)
-            // {
-            //     Debug.Log("I =" + i);
-            //     var connection = RoomPlayers[i].connectionToClient;
-            //     var gameplayerInstance = Instantiate(gamePlayerPrefab);
-            //    // Debug.Log("RoomPlayers I = " + RoomPlayers[i].DisplayName);
-            //     //Debug.Log("Past the point!");
-            //     gameplayerInstance.SetDisplayName(RoomPlayers[i].DisplayName);
-
-            //     //NetworkServer.Destroy(connection.identity.gameObject);
-
-            //    // NetworkServer.ReplacePlayerForConnection(connection, gameplayerInstance.gameObject);
-            // }
             base.ServerChangeScene(newScene);
         }
     }
 
-    // [Command]
-    // public void CmdChangeScene(string newScene)
-    // {
-    //    // Debug.Log("Room players count = " + RoomPlayers.Count);
-    //         for(int i = RoomPlayers.Count - 1; i >= 0; i--)
-    //         {
-    //            // Debug.Log("I =" + i);
-    //             var connection = RoomPlayers[i].connectionToClient;
-    //             var gameplayerInstance = Instantiate(gamePlayerPrefab);
-    //            // Debug.Log("RoomPlayers I = " + RoomPlayers[i].DisplayName);
-    //             gameplayerInstance.SetDisplayName(RoomPlayers[i].DisplayName);
+    public override void OnServerReady(NetworkConnection connection)
+    {
+        base.OnServerReady(connection);
 
-    //             NetworkServer.Destroy(connection.identity.gameObject);
+        OnServerReadied?.Invoke(connection);
+    }
 
-    //             NetworkServer.ReplacePlayerForConnection(connection, gameplayerInstance.gameObject);
-    //         }
-    // }
+    public override void OnServerSceneChanged(string sceneName)
+    {
+        if(sceneName == menuScene)
+        {
+            GameObject playerSpawnSystem = Instantiate(spawnSystem);
+            NetworkServer.Spawn(playerSpawnSystem);
+        }
+    }
+
 }
