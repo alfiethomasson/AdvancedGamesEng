@@ -141,7 +141,7 @@ public class SyncPosition : NetworkBehaviour
             }
             else
             {
-                curTransform.position = syncPos;
+                //curTransform.position = syncPos;
             }
         }
         if(useDeadReckoning)
