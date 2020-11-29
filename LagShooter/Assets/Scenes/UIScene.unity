@@ -1818,6 +1818,8 @@ MonoBehaviour:
   roomPlayerPrefab: {fileID: 6095785965566193505, guid: 07b1f425acd88c646817714b408b1da0,
     type: 3}
   gamePlayerPrefab: {fileID: 1072519659, guid: ad9f4e7a0123cae4abc1503b7b96db44, type: 3}
+  spawnSystem: {fileID: 8702333085130539188, guid: 6f2734f6645f831478bdf2a11b0b58a4,
+    type: 3}
 --- !u!1 &1642110387
 GameObject:
   m_ObjectHideFlags: 0

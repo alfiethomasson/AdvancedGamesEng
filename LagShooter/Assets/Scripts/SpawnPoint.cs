@@ -8,6 +8,7 @@ public class SpawnPoint : MonoBehaviour
     private void Awake()
     {
         PlayerSpawn.AddSpawnPoint(transform);
+        Debug.Log("Adding spawn point at " + transform.position);
     }
 
     private void OnDestroy()
