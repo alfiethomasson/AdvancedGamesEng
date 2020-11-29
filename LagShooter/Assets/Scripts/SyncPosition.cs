@@ -62,7 +62,7 @@ public class SyncPosition : NetworkBehaviour
     // Update is called once per frame
     void Update()
     {
-        LerpPosition();
+        //LerpPosition();
         if(useAutomaticToggle)
         {
         CheckPing();
@@ -203,19 +203,17 @@ public class SyncPosition : NetworkBehaviour
         {
         if(Vector3.Distance(curTransform.position, lastPos) > threshold)
         {
+            Debug.Log("THREHOLD EXCEEDED: last pos = " + lastPos);
             CmdSendPosition(curTransform.position);
             lastPos = curTransform.position;
         }
         }
         else
         {
+            Debug.Log("THREHOLD EXCEEDED: last pos = " + lastPos);
             CmdSendPosition(curTransform.position);
             lastPos = curTransform.position;
         }
-        //else if(pastMove)
-        //{
-         //  CmdSendPosition(new Vector3(0, 0, 0));
-       // }
         }
     }
 

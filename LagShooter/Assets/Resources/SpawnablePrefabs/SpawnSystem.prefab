@@ -62,4 +62,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
-  player: {fileID: 6256534361350638887, guid: 60138f1fe040d464da8b41616cf34fd9, type: 3}
+  player: {fileID: 7862551345914443110, guid: c9e0ec5a846413d4c8a6ff1e1453bf85, type: 3}
