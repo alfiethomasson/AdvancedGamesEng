@@ -204,14 +204,14 @@ public class SyncPosition : NetworkBehaviour
         if(Vector3.Distance(curTransform.position, lastPos) > threshold)
         {
             Debug.Log("THREHOLD EXCEEDED: last pos = " + lastPos);
-            CmdSendPosition(curTransform.position);
+            //CmdSendPosition(curTransform.position);
             lastPos = curTransform.position;
         }
         }
         else
         {
             Debug.Log("THREHOLD EXCEEDED: last pos = " + lastPos);
-            CmdSendPosition(curTransform.position);
+            //CmdSendPosition(curTransform.position);
             lastPos = curTransform.position;
         }
         }

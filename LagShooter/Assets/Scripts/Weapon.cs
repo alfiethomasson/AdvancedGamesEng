@@ -34,7 +34,7 @@ public class Weapon : NetworkBehaviour
     // Update is called once per frame
     void Update()
     {
-       if(!isLocalPlayer) { Debug.Log(laser.enabled); return;}
+       if(!isLocalPlayer) { return;}
        /*  RaycastHit hit;
             laser.SetPosition(0, muzzle.position);
             Vector3 rayOrigin = fpsCam.ViewportToWorldPoint (new Vector3(0.5f, 0.5f, 0.0f));
