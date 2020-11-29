@@ -51,8 +51,8 @@ MonoBehaviour:
   autoStartServerBuild: 1
   showDebugMessages: 0
   serverTickRate: 2
-  offlineScene: Assets/Scenes/Testing.unity
-  onlineScene: Assets/Scenes/Testing.unity
+  offlineScene: 
+  onlineScene: 
   transport: {fileID: 5434966329381757584}
   networkAddress: 192.168.1.161
   maxConnections: 2

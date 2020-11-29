@@ -38,6 +38,7 @@ public class PlayerNameInput : MonoBehaviour
     public void SavePlayerName()
     {
         DispName = nameInputField.text;
+        Debug.Log("Saved player name as: " + DispName);
 
         PlayerPrefs.SetString(PlayerPrefsNameKey, DispName);
     }

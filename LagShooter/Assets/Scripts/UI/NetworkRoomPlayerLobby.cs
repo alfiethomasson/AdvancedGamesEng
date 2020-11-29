@@ -45,7 +45,7 @@ public class NetworkRoomPlayerLobby : NetworkBehaviour
 
     public override void OnStartAuthority()
     {
-      //  CmdSetDisplayName(PlayerNameInput.DisplayName);
+        CmdSetDisplayName(PlayerNameInput.DispName);
 
         lobbyUI.SetActive(true);
 
@@ -55,6 +55,13 @@ public class NetworkRoomPlayerLobby : NetworkBehaviour
     {
         Room.RoomPlayers.Add(this);
 
+        UpdateDisplay();
+    }
+
+    public override void OnNetworkDestroy()
+    {
+        Room.RoomPlayers.Remove(this);
+    
         UpdateDisplay();
     }
 
@@ -85,12 +92,14 @@ public class NetworkRoomPlayerLobby : NetworkBehaviour
 
         for(int i = 0; i < playerNames.Length; i++)
         {
-            playerNames[i].text = "Waiting for Player...";
-            playersReady[i].text = string.Empty;
+            // playerNames[i].text = "Empty...";
+            // playersReady[i].text = string.Empty;
         }
+        Debug.Log("Trying to update names over here");
 
         for(int i = 0; i < Room.RoomPlayers.Count; i++)
         {
+            Debug.Log("Current roomplayers name = " + Room.RoomPlayers[i].DisplayName);
             playerNames[i].text = Room.RoomPlayers[i].DisplayName;
             playersReady[i].text = Room.RoomPlayers[i].IsReady ? 
             "<color=green>Ready</color>" : "<color=red>Not Ready</color>";
@@ -125,17 +134,19 @@ public class NetworkRoomPlayerLobby : NetworkBehaviour
         {
             return;
         }
+
+        Debug.Log("trying to start game");
+        SERVERRUN();
+        if(isServer)
+        {
+            Debug.Log("Hi I am server!");
+        }
+        Room.StartGame();
     }
 
-    // Start is called before the first frame update
-    void Start()
+    [Server]
+    public void SERVERRUN()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        Debug.Log("Server");
     }
 }
