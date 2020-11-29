@@ -57,12 +57,13 @@ public class SyncPosition : NetworkBehaviour
     {
         lerpRate = normLerpRate;
         networkPingDisplay = GameObject.Find("Network Manager").GetComponent<NetworkPingDisplay>();
+        syncPos = curTransform.position;
     }
 
     // Update is called once per frame
     void Update()
     {
-        //LerpPosition();
+        LerpPosition();
         if(useAutomaticToggle)
         {
         CheckPing();
@@ -141,7 +142,9 @@ public class SyncPosition : NetworkBehaviour
             }
             else
             {
-                //curTransform.position = syncPos;
+                Debug.Log("Syncing pos: cur transform = " + curTransform.position);
+                Debug.Log("Syncing pos: sync pos = " + syncPos);
+                curTransform.position = syncPos;
             }
         }
         if(useDeadReckoning)
