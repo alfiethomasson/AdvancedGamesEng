@@ -207,14 +207,14 @@ public class SyncPosition : NetworkBehaviour
         if(Vector3.Distance(curTransform.position, lastPos) > threshold)
         {
             Debug.Log("THREHOLD EXCEEDED: last pos = " + lastPos);
-            //CmdSendPosition(curTransform.position);
+            CmdSendPosition(curTransform.position);
             lastPos = curTransform.position;
         }
         }
         else
         {
             Debug.Log("THREHOLD EXCEEDED: last pos = " + lastPos);
-            //CmdSendPosition(curTransform.position);
+            CmdSendPosition(curTransform.position);
             lastPos = curTransform.position;
         }
         }
@@ -224,7 +224,7 @@ public class SyncPosition : NetworkBehaviour
     void RpcSyncPosValues(Vector3 oldPos, Vector3 recentPos)
     {
         syncPos = recentPos;
-        //pastMove = syncPos - oldPos;
+        pastMove = syncPos - oldPos;
         // if(useHistoricalLerp)
         // {
         // syncPosList.Add(syncPos);
