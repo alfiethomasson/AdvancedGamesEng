@@ -18,12 +18,12 @@ public class NameTag : NetworkBehaviour
         NamePlate = gameObject.GetComponentInChildren<TextMesh>();
         if(isLocalPlayer)
         {
-        //nameText = PlayerPrefs.GetString("PlayerName", "Anonymous");
+        nameText = PlayerPrefs.GetString("PlayerName", "Anonymous");
         Debug.Log("Player Prefs name = " + PlayerPrefs.GetString("PlayerName", "Anonymous"));
         //UpdateAllTags();
         }
         Object = this.gameObject;
-      //  UpdateNameTags();
+        UpdateNameTags();
     }
 
     // Update is called once per frame

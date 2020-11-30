@@ -1804,7 +1804,7 @@ MonoBehaviour:
   offlineScene: 
   onlineScene: Assets/Scenes/UIScene.unity
   transport: {fileID: 1580948799}
-  networkAddress: 192.168.1.161
+  networkAddress: 192.168.1.158
   maxConnections: 4
   disconnectInactiveConnections: 0
   disconnectInactiveTimeout: 60
