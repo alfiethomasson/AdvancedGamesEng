@@ -19,7 +19,7 @@ public class CustomNetworkManager : NetworkManager
       foreach(GameObject p in players)
       {
           Debug.Log("Trying to call rpcupdate ");
-        p.GetComponentInChildren<NameTag>().CallAllTags();
+//        p.GetComponentInChildren<NameTag>().CallAllTags();
 
       }
   }

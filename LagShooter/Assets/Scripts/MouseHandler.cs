@@ -16,18 +16,19 @@ public class MouseHandler : NetworkBehaviour
     
     void Start()
     {
-        if(isLocalPlayer)
+        if(hasAuthority)
         {
         Camera serverCam = GameObject.Find("ServerCam").GetComponent<Camera>();
         serverCam.enabled = false;
         }
         cam = this.GetComponentInChildren<Camera>();
+        cam.enabled = true;
        // player = this.gameObject;
     }
  
     void Update()
     {
-        if(!isLocalPlayer) { cam.enabled = false; return;}
+        if(!hasAuthority) { cam.enabled = false; return;}
         float mouseX = Input.GetAxis("Mouse X") * horizontalSpeed;
         float mouseY = Input.GetAxis("Mouse Y") * verticalSpeed;
  

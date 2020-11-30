@@ -9,11 +9,21 @@ public class NameTag : NetworkBehaviour
     public GameObject Object;
     public Transform toLook;
 
+    [SyncVar]
+    public string nameText;
+
     // Start is called before the first frame update
     void Start()
     {
-        NamePlate = gameObject.GetComponent<TextMesh>();
+        NamePlate = gameObject.GetComponentInChildren<TextMesh>();
+        if(isLocalPlayer)
+        {
+        //nameText = PlayerPrefs.GetString("PlayerName", "Anonymous");
+        Debug.Log("Player Prefs name = " + PlayerPrefs.GetString("PlayerName", "Anonymous"));
+        //UpdateAllTags();
+        }
         Object = this.gameObject;
+      //  UpdateNameTags();
     }
 
     // Update is called once per frame
@@ -21,6 +31,11 @@ public class NameTag : NetworkBehaviour
     {
         if(!isLocalPlayer)
         this.gameObject.transform.LookAt(toLook);
+    }
+
+    void SetName()
+    {
+        NamePlate.text = nameText;
     }
 
     [ClientRpc]
@@ -35,14 +50,45 @@ public class NameTag : NetworkBehaviour
             foreach(GameObject p in players)
             {
                 NameTag n = p.GetComponentInChildren<NameTag>();
+                n.SetName();
                 n.toLook = curTransform;
             }
         }
     }
 
-    [Server]
-    public void CallAllTags()
+    public void UpdateNameTags()
     {
-        RpcUpdateNameTags();
+        Debug.Log("Calling updateNameTags here");
+            GameObject[] players;
+            players = GameObject.FindGameObjectsWithTag("Player");
+            Transform curTransform = this.gameObject.transform;
+            foreach(GameObject p in players)
+            {
+                NameTag n = p.GetComponentInChildren<NameTag>();
+                n.SetName();
+                if(isLocalPlayer)
+                {
+                n.toLook = curTransform;
+                }
+            }
     }
+
+    [Command]
+    public void UpdateAllTags()
+    {
+        Debug.Log("Called command");
+        GameObject[] players;
+        players = GameObject.FindGameObjectsWithTag("Player");
+         foreach(GameObject p in players)
+            {
+                NameTag n = p.GetComponentInChildren<NameTag>();
+                n.RpcUpdateNameTags();
+            }
+    }
+
+    // [Server]
+    // public void CallAllTags()
+    // {
+    //     RpcUpdateNameTags();
+    // }
 }

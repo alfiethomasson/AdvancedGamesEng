@@ -122,7 +122,7 @@ public class SyncRotation : NetworkBehaviour
         Vector3 playerNewRot = new Vector3(0, newRot, 0);
         if(useInterpolation)
         {
-        curTransform.rotation = Quaternion.Lerp(curTransform.rotation, Quaternion.Euler(playerNewRot), Time.deltaTime * lerpRate);
+       // curTransform.rotation = Quaternion.Lerp(curTransform.rotation, Quaternion.Euler(playerNewRot), Time.deltaTime * lerpRate);
         }
         else
         {

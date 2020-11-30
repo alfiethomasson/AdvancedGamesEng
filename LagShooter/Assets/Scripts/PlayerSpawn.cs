@@ -48,6 +48,7 @@ public class PlayerSpawn : NetworkBehaviour
 
         GameObject playerInstantiated = Instantiate(player, spawnPoints[index].position, spawnPoints[index].rotation);
         NetworkServer.Spawn(playerInstantiated, connection);
+        NetworkServer.ReplacePlayerForConnection(connection, playerInstantiated, true);
         Debug.Log("Player spawned at " + spawnPoints[index].position);
 
         index += 1;

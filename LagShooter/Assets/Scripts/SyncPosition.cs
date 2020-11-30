@@ -142,8 +142,8 @@ public class SyncPosition : NetworkBehaviour
             }
             else
             {
-                Debug.Log("Syncing pos: cur transform = " + curTransform.position);
-                Debug.Log("Syncing pos: sync pos = " + syncPos);
+                //Debug.Log("Syncing pos: cur transform = " + curTransform.position);
+               // Debug.Log("Syncing pos: sync pos = " + syncPos);
                 curTransform.position = syncPos;
             }
         }
@@ -206,14 +206,14 @@ public class SyncPosition : NetworkBehaviour
         {
         if(Vector3.Distance(curTransform.position, lastPos) > threshold)
         {
-            Debug.Log("THREHOLD EXCEEDED: last pos = " + lastPos);
+            //Debug.Log("THREHOLD EXCEEDED: last pos = " + lastPos);
             CmdSendPosition(curTransform.position);
             lastPos = curTransform.position;
         }
         }
         else
         {
-            Debug.Log("THREHOLD EXCEEDED: last pos = " + lastPos);
+           // Debug.Log("THREHOLD EXCEEDED: last pos = " + lastPos);
             CmdSendPosition(curTransform.position);
             lastPos = curTransform.position;
         }
@@ -238,7 +238,7 @@ public class SyncPosition : NetworkBehaviour
         {
         syncPosList.Clear();
       //  useHistoricalLerp = isOn;
-        Debug.Log("Calling on this client!");
+        //Debug.Log("Calling on this client!");
         }
         else
         {
@@ -254,7 +254,7 @@ public class SyncPosition : NetworkBehaviour
     {
         if(!isLocalPlayer)
         {
-            Debug.Log("Calling on this client!");
+           // Debug.Log("Calling on this client!");
             useInterpolation = isOn;
         }
         else
@@ -271,7 +271,7 @@ public class SyncPosition : NetworkBehaviour
     {
         if(!isLocalPlayer)
         {
-            Debug.Log("Calling on this client!");
+           // Debug.Log("Calling on this client!");
             useDeadReckoning = isOn;
         }
         else
@@ -288,7 +288,7 @@ public class SyncPosition : NetworkBehaviour
     {
         if(!isLocalPlayer)
         {
-            Debug.Log("Calling on this client!");
+           // Debug.Log("Calling on this client!");
             useAutomaticToggle = isOn;
             if(useAutomaticToggle)
             {
