@@ -13,6 +13,8 @@ public class PlayerSpawn : NetworkBehaviour
 
     private int index = 0;
 
+    public HitTracking hitTracker;
+
     public static void AddSpawnPoint(Transform transform)
     {
         spawnPoints.Add(transform);
@@ -27,6 +29,7 @@ public class PlayerSpawn : NetworkBehaviour
     public override void OnStartServer()
     {
         LobbyManager.OnServerReadied += SpawnPlayer;
+        hitTracker = GameObject.Find("HitTracker").GetComponent<HitTracking>();
     }
 
     [ServerCallback]
@@ -47,9 +50,13 @@ public class PlayerSpawn : NetworkBehaviour
         }
 
         GameObject playerInstantiated = Instantiate(player, spawnPoints[index].position, spawnPoints[index].rotation);
+        TextMesh onPlayerNameTag = playerInstantiated.GetComponentInChildren<TextMesh>();
+       // onPlayerNameTag.text = Disp
         NetworkServer.Spawn(playerInstantiated, connection);
         NetworkServer.ReplacePlayerForConnection(connection, playerInstantiated, true);
         Debug.Log("Player spawned at " + spawnPoints[index].position);
+
+        hitTracker.AddPlayerToList(playerInstantiated);
 
         index += 1;
     }

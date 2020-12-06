@@ -37,6 +37,7 @@ public class PlayerController : NetworkBehaviour
             CmdRespawn();
             return;
         }
+
         // if(curHP == 0)
         // {
         //     Debug.Log(curHP);
@@ -55,6 +56,19 @@ public class PlayerController : NetworkBehaviour
         float vertical = Input.GetAxis("Vertical") * MovementSpeed;
         characterController.Move((transform.right * horizontal + transform.forward * vertical) * Time.deltaTime);
         
+        if(Input.GetKeyDown(KeyCode.M))
+        {
+            Cursor.visible = !Cursor.visible;
+            if(Cursor.lockState == CursorLockMode.None)
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.None;
+            }
+        }
+
         if(Input.GetButtonDown ("Fire1"))
         {
             weapon.Fire();

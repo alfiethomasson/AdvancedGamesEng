@@ -16,11 +16,19 @@ public class NetworkRoomPlayerLobby : NetworkBehaviour
     private Text[] playersReady = new Text[4];
     [SerializeField]
     private Button startButton = null;
+    [SerializeField]
+    private Text countdownText = null;
+
+    private string countString = "Launching game in: ";
 
     [SyncVar (hook = nameof(HandleDisplayNameChanged))]
     public string DisplayName = "Loading...";
     [SyncVar (hook = nameof(HandleReadyStatusChanged))]
     public bool IsReady = false;
+    [SyncVar (hook = nameof(HandleCountDownTimeChanged))]
+    public int countdownTime = 300;
+    [SyncVar (hook = nameof(HandleCountDownActive))]
+    public bool countdownActive = false;
 
     private bool isLeader;
     public bool IsLeader
@@ -58,6 +66,11 @@ public class NetworkRoomPlayerLobby : NetworkBehaviour
         UpdateDisplay();
     }
 
+    public override void OnStartServer()
+    {
+        Room.RoomPlayers.Add(this);
+    }
+
     public override void OnNetworkDestroy()
     {
         Room.RoomPlayers.Remove(this);
@@ -68,11 +81,23 @@ public class NetworkRoomPlayerLobby : NetworkBehaviour
     public void HandleReadyStatusChanged(bool oldval, bool newval)
     {
         UpdateDisplay();
+        Debug.Log("handle ready status");
+        CmdStartGame();
     }
 
     public void HandleDisplayNameChanged(string oldval, string newval)
     {
         UpdateDisplay();
+    }
+
+    public void HandleCountDownTimeChanged(int oldVal, int newVal)
+    {
+        countdownText.text = countString + newVal;
+    }
+
+    public void HandleCountDownActive(bool oldVal, bool newVal)
+    {
+        countdownText.gameObject.SetActive(newVal);
     }
 
     private void UpdateDisplay()
@@ -130,13 +155,8 @@ public class NetworkRoomPlayerLobby : NetworkBehaviour
     [Command]
     public void CmdStartGame()
     {
-        if(Room.RoomPlayers[0].connectionToClient != connectionToClient)
-        {
-            return;
-        }
-
         Debug.Log("trying to start game");
-        SERVERRUN();
+       // SERVERRUN();
         if(isServer)
         {
             Debug.Log("Hi I am server!");
@@ -144,9 +164,8 @@ public class NetworkRoomPlayerLobby : NetworkBehaviour
         Room.StartGame();
     }
 
-    [Server]
-    public void SERVERRUN()
+    void Update()
     {
-        Debug.Log("Server");
+        Debug.Log("Player Prefs name = " + PlayerPrefs.GetString("PlayerName"));
     }
 }

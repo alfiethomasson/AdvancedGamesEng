@@ -11,6 +11,8 @@ public class Weapon : NetworkBehaviour
     public float range = 50.0f;
     public float shotDuration = 0.3f;
 
+    public HitTracking hitTracker;
+
     public Transform muzzle;
 
     [SyncVar]
@@ -29,6 +31,7 @@ public class Weapon : NetworkBehaviour
     {
         laser = GetComponent<LineRenderer>();
         fpsCam = GetComponentInChildren<Camera>();
+        hitTracker = GameObject.Find("HitTracker").GetComponent<HitTracking>();
     }
 
     // Update is called once per frame
@@ -56,7 +59,8 @@ public class Weapon : NetworkBehaviour
             RaycastHit hit;
           //  laser.SetPosition(0, muzzle.position);
             Vector3 rayOrigin = fpsCam.ViewportToWorldPoint (new Vector3(0.5f, 0.5f, 0.0f));
-            CmdCheckShot();
+            double latencyTime = NetworkTime.rtt;
+            CmdCheckShot(latencyTime);
             // if (Physics.Raycast(rayOrigin,fpsCam.transform.forward, out hit, range))
             // {
             //     laser.SetPosition(1, hit.point);
@@ -78,32 +82,31 @@ public class Weapon : NetworkBehaviour
     }
 
     [Command]
-    public void CmdCheckShot()
+    public void CmdCheckShot(double latency)
     {
         RaycastHit hit;
         // laser.SetPosition(0, muzzle.position);
-        Vector3 rayOrigin = fpsCam.ViewportToWorldPoint (new Vector3(0.5f, 0.5f, 0.0f));
+        Vector3 rayOrigin = fpsCam.ViewportToWorldPoint (new Vector3(0.5f, 0.5f, 2.0f));
+        Debug.Log("heyo");
+        hit = hitTracker.BeginComputeHit(latency, rayOrigin, fpsCam.transform.forward);
 
-
-         if (Physics.Raycast(rayOrigin,fpsCam.transform.forward, out hit, range))
+        laser.SetPosition(0, muzzle.position);
+        RpcShowLine(hit.point);
+        Vector3 rayLine = muzzle.position + (fpsCam.transform.forward * 25);
+        // Gizmos.color = Color.red;
+        // Gizmos.DrawLine(muzzle.position, rayLine);
+        Debug.Log("heyo2");
+        Debug.Log("I hit: " + hit.collider.tag);
+         if (hit.collider.tag == "PlayerBody")
             {
                // Debug.DrawRay(rayOrigin, fpsCam.transform.forward, Color.green, 1);
                 //laser.SetPosition(1, hit.point);
               // RpcShowLine(hit.transform.position);
-              laser.SetPosition(0, muzzle.position);
-              RpcShowLine(hit.point);
-                if(hit.collider.tag == "PlayerBody")
-                {
-                    Debug.Log("Hit Player");
                    // dealDamage(hit);
                    GameObject enemy = hit.collider.gameObject;
                    PlayerController enemyController = enemy.GetComponentInParent<PlayerController>();
                    enemyController.TakeDamage(1);
-                }
-                else
-                {
                     Debug.Log("I hit: " + hit.collider.tag);
-                }
             }
             else
             {

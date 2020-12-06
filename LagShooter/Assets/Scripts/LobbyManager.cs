@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using Mirror;
 using UnityEngine.SceneManagement;
 using System.Linq;
@@ -30,6 +31,13 @@ public class LobbyManager : NetworkManager
 
     public List<NetworkRoomPlayerLobby> RoomPlayers {get;} = new List<NetworkRoomPlayerLobby>();
     public List<NetworkGamePlayerLobby> GamePlayers {get;} = new List<NetworkGamePlayerLobby>();
+
+    int countdownInt;
+    public bool countdownActive = false;
+    public float defaultCountDown = 5.0f;
+    public float countdownTime = 5.0f;
+
+    public string playerName;
 
     public override void OnStartServer()
     {
@@ -111,7 +119,7 @@ public class LobbyManager : NetworkManager
     private bool IsReadyStart()
     {
         if(RoomPlayers.Count < minPlayers) { Debug.Log("False bc not enough players"); 
-        Debug.Log("num players = " + numPlayers); return false; }
+        Debug.Log("num players = " + RoomPlayers.Count); return false; }
 
         Debug.Log("RoomPlayers size = " + RoomPlayers.Count);
 
@@ -130,10 +138,27 @@ public class LobbyManager : NetworkManager
         if(SceneManager.GetActiveScene().name == menuScene)
         {
           //  Debug.Log("Menu Scene correct");
-            if(!IsReadyStart()) {return;}
+            if(!IsReadyStart()) 
             {
-             //   Debug.Log("Ready to start!");
-                ServerChangeScene("GameScene");
+                //playerName = PlayerNameInput.DispName;
+                countdownActive = false;
+                countdownTime = defaultCountDown;
+                for(int i = 0; i < RoomPlayers.Count; i++)
+                {
+                    RoomPlayers[i].countdownActive = false;
+                }
+                return;
+            }
+            else
+            {
+
+                Debug.Log("Ready to start!");
+                countdownActive = true;
+                for(int i = 0; i < RoomPlayers.Count; i++)
+                {
+                    RoomPlayers[i].countdownActive = true;
+                }
+               // ServerChangeScene("GameScene");
             }
         }
         else
@@ -181,4 +206,23 @@ public class LobbyManager : NetworkManager
         }
     }
 
+    [Server]
+    void Update()
+    {
+        if(countdownActive)
+        {
+            Debug.Log("Countdown active!");
+            countdownTime -= Time.deltaTime;
+            Debug.Log("Countdown time = " + countdownTime);
+            for(int i = 0; i < RoomPlayers.Count; i++)
+            {
+                RoomPlayers[i].countdownTime = (int)countdownTime;
+            }
+            if(countdownTime < 0)
+            {
+                ServerChangeScene("GameScene");
+                countdownActive = false;
+            }
+        }
+    }
 }

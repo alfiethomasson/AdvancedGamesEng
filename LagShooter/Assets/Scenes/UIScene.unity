@@ -1247,6 +1247,7 @@ MonoBehaviour:
   networkManager: {fileID: 1580948800}
   landingPagePanel: {fileID: 728960691}
   ipInputField: {fileID: 198347638}
+  joinText: {fileID: 1642110389}
   joinButton: {fileID: 368725820}
 --- !u!1 &1059472263
 GameObject:
@@ -1804,7 +1805,7 @@ MonoBehaviour:
   offlineScene: 
   onlineScene: Assets/Scenes/UIScene.unity
   transport: {fileID: 1580948799}
-  networkAddress: 192.168.1.158
+  networkAddress: 192.168.1.161
   maxConnections: 4
   disconnectInactiveConnections: 0
   disconnectInactiveTimeout: 60
@@ -1820,6 +1821,9 @@ MonoBehaviour:
   gamePlayerPrefab: {fileID: 1072519659, guid: ad9f4e7a0123cae4abc1503b7b96db44, type: 3}
   spawnSystem: {fileID: 8702333085130539188, guid: 6f2734f6645f831478bdf2a11b0b58a4,
     type: 3}
+  countdownActive: 0
+  defaultCountDown: 3
+  countdownTime: 10
 --- !u!1 &1642110387
 GameObject:
   m_ObjectHideFlags: 0

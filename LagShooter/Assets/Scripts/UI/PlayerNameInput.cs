@@ -40,12 +40,13 @@ public class PlayerNameInput : MonoBehaviour
         DispName = nameInputField.text;
         Debug.Log("Saved player name as: " + DispName);
 
+        //LobbyManager.SetPlayerName(DispName);
         PlayerPrefs.SetString(PlayerPrefsNameKey, DispName);
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        //Debug.Log("PlayerPrefs name = " + PlayerPrefs.GetString(PlayerPrefsNameKey));
     }
 }

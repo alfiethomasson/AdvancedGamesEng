@@ -15,7 +15,12 @@ public class JoinLobbyMenu : MonoBehaviour
     private InputField ipInputField = null;
 
     [SerializeField]
+    private Text joinText = null;
+
+    [SerializeField]
     private Button joinButton = null;
+
+    private bool connecting = false;
 
     private void OnEnable()
     {
@@ -31,13 +36,23 @@ public class JoinLobbyMenu : MonoBehaviour
 
     public void JoinLobby()
     {
+        if(!connecting)
+        {
         string ipaddress = ipInputField.text;
 
         networkManager.networkAddress = ipaddress;
         Debug.Log("Read IP address as: " + ipaddress);
         networkManager.StartClient();
+        joinText.text = "Cancel Join";
 
-        joinButton.interactable = false;
+        connecting = true;
+        }
+        else
+        {
+            networkManager.StopClient();
+            joinText.text = "Join Game";
+            connecting = false;
+        }
     }
 
     private void HandleClientConnected()
