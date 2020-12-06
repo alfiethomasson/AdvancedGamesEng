@@ -10,6 +10,9 @@ public class HitTracking : NetworkBehaviour
 
     public List<TrackedPlayer> trackedPlayers = new List<TrackedPlayer>();
 
+    [SerializeField]
+    private GameObject prevGameObject;
+
     public float serverTickRate;
 
     // Start is called before the first frame update
@@ -33,7 +36,7 @@ public class HitTracking : NetworkBehaviour
     public void AddPlayerToList(GameObject newPlayer)
     {
         playerGameObjects.Add(newPlayer);
-        TrackedPlayer tempPlayer = new TrackedPlayer(newPlayer.transform.GetChild(0).gameObject);
+        TrackedPlayer tempPlayer = new TrackedPlayer(newPlayer.gameObject);
        // tempPlayer.SetPlayerBody(newPlayer);
         trackedPlayers.Add(tempPlayer);
     }
@@ -49,18 +52,44 @@ public class HitTracking : NetworkBehaviour
         if(calculatedPosition > 119) {calculatedPosition = 119;}
         calculatedPosition = 119 - calculatedPosition;
          Debug.Log("Calculated Position = " + (int)calculatedPosition);
+         calculatedPosition = 0;
 
         foreach(TrackedPlayer player in trackedPlayers)
         {
             //Debug.Log("Player currently at: " + player.playerBody.transform.position);
            // Debug.Log("Player moving to: " + player.positions[calculatedPosition].position);
             player.playerBody.transform.position = player.positions[calculatedPosition];
+            //prevGameObject.transform.position = player.positions[calculatedPosition];
            // Debug.Log("Positions number 0: " + player.positions[0]);
            // Debug.Log("Positions number 119: " + player.positions[119]);
         }
         RaycastHit hit;
-        Physics.Raycast(rayOrigin,rayForward, out hit, 100.0f);
+        Physics.Raycast(rayOrigin,rayForward, out hit, 500.0f);
+        StartCoroutine(ParallelMoveObject(hit, calculatedPosition));
         return hit;
+    }
+
+    private IEnumerator ParallelMoveObject(RaycastHit hit, int calculatedPos)
+    {
+        if(hit.collider.tag == "PlayerBody")
+        {
+            foreach(TrackedPlayer p in trackedPlayers)
+            {
+                if(p.playerBody.GetComponentInChildren<CapsuleCollider>() == hit.collider)
+                {
+                    prevGameObject.transform.position = p.positions[calculatedPos];
+                    RpcMovePrevGameObject(p.positions[calculatedPos]);
+                    yield break;
+                }
+            }
+        }
+    }
+
+    [ClientRpc]
+    public void RpcMovePrevGameObject(Vector3 toMove)
+    {
+        toMove.y = 1.0f;
+        prevGameObject.transform.position = toMove;
     }
 
     // public struct PlayerPositions

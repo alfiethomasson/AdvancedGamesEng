@@ -231,6 +231,13 @@ public class SyncPosition : NetworkBehaviour
         // }
     }
 
+    [Command]
+    public void CmdRespawn(Vector3 newPos)
+    {
+        syncPos = newPos;
+        curTransform.position = newPos;
+    }
+
     [ClientRpc]
     public void RpcChangeHistoricalLerp(bool isOn)
     {

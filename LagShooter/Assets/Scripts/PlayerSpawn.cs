@@ -51,11 +51,13 @@ public class PlayerSpawn : NetworkBehaviour
 
         GameObject playerInstantiated = Instantiate(player, spawnPoints[index].position, spawnPoints[index].rotation);
         TextMesh onPlayerNameTag = playerInstantiated.GetComponentInChildren<TextMesh>();
+        playerInstantiated.GetComponent<PlayerController>().UpdatePrevSpawn(index);
        // onPlayerNameTag.text = Disp
         NetworkServer.Spawn(playerInstantiated, connection);
         NetworkServer.ReplacePlayerForConnection(connection, playerInstantiated, true);
         Debug.Log("Player spawned at " + spawnPoints[index].position);
 
+        playerInstantiated.GetComponent<PlayerController>().UpdatePrevSpawn(index);
         hitTracker.AddPlayerToList(playerInstantiated);
 
         index += 1;

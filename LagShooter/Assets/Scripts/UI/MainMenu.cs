@@ -16,7 +16,12 @@ public class MainMenu : MonoBehaviour
     public void HostLobby()
     {
         networkManager.StartServer();
-        landingPagePanel.SetActive(false);
+       // landingPagePanel.SetActive(false);
+    }
+
+    public void StopLobby()
+    {
+        networkManager.StopServer();
     }
 
     // Start is called before the first frame update

@@ -44,7 +44,7 @@ public class NameTag : NetworkBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(!isLocalPlayer)
+        if(!isLocalPlayer && !isServer)
         {
             //Debug.Log("Should look");
             nameTagGameObject.transform.rotation = Quaternion.LookRotation(transform.position - toLook.position);

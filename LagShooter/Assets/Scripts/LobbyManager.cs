@@ -174,6 +174,7 @@ public class LobbyManager : NetworkManager
         {
            // CmdChangeScene(newScene);
             Debug.Log("Room players count = " + RoomPlayers.Count);
+            countdownActive = false;
             for(int i = RoomPlayers.Count - 1; i >= 0; i--)
             {
                 Debug.Log("I =" + i);
@@ -209,7 +210,7 @@ public class LobbyManager : NetworkManager
     [Server]
     void Update()
     {
-        if(countdownActive)
+        if(countdownActive && SceneManager.GetActiveScene().name == menuScene)
         {
             Debug.Log("Countdown active!");
             countdownTime -= Time.deltaTime;

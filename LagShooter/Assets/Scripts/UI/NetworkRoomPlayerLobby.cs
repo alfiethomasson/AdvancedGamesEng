@@ -18,6 +18,8 @@ public class NetworkRoomPlayerLobby : NetworkBehaviour
     private Button startButton = null;
     [SerializeField]
     private Text countdownText = null;
+    [SerializeField]
+    private Text welcomeText = null;
 
     private string countString = "Launching game in: ";
 
@@ -54,7 +56,7 @@ public class NetworkRoomPlayerLobby : NetworkBehaviour
     public override void OnStartAuthority()
     {
         CmdSetDisplayName(PlayerNameInput.DispName);
-
+        welcomeText.text = "Welcome: " + PlayerNameInput.DispName;
         lobbyUI.SetActive(true);
 
     }
@@ -162,10 +164,5 @@ public class NetworkRoomPlayerLobby : NetworkBehaviour
             Debug.Log("Hi I am server!");
         }
         Room.StartGame();
-    }
-
-    void Update()
-    {
-        Debug.Log("Player Prefs name = " + PlayerPrefs.GetString("PlayerName"));
     }
 }

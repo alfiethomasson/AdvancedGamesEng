@@ -361,7 +361,13 @@ MonoBehaviour:
   range: 50
   shotDuration: 0.3
   hitTracker: {fileID: 0}
+  hitTrackerGameObject: {fileID: 0}
   muzzle: {fileID: 7862551345485842906}
+  bulletHitPrefab: {fileID: 6040399399885359448, guid: ae8d911d72960554d93668d252b79186,
+    type: 3}
+  uiManager: {fileID: 0}
+  curAmmo: 0
+  maxAmmo: 10
 --- !u!114 &7053365433093261883
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -376,10 +382,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
+  uiManager: {fileID: 0}
   myTransform: {fileID: 7862551345914443115}
+  syncPositionScript: {fileID: 5145122290807465177}
   MovementSpeed: 10
-  MaxHP: 5
-  curHP: 5
+  MaxHP: 100
+  curHP: 100
+  prevSpawn: 0
+  spawnPoints: []
+  deaths: 0
+  kills: 0
   Gravity: 9.8
 --- !u!114 &5145122290807465177
 MonoBehaviour:
@@ -600,7 +612,7 @@ Camera:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7862551345997561937}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_ClearFlags: 1
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}

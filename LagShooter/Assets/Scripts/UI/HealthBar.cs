@@ -19,8 +19,8 @@ public class HealthBar : MonoBehaviour
     void Update()
     {
       //  Debug.Log("Player HP = " + player.curHP);
-        int mappedHP = map(player.curHP, 0, player.MaxHP, 0, 100);
-        slider.value = mappedHP;
+      //  int mappedHP = map(player.curHP, 0, player.MaxHP, 0, 100);
+        //slider.value = mappedHP;
     }
     private static int map(int value, int fromLow, int fromHigh, int toLow, int toHigh) 
     {

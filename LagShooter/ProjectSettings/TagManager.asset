@@ -7,6 +7,9 @@ TagManager:
   - PCam
   - Destructible
   - PlayerBody
+  - HitTracker
+  - CanvasMain
+  - SpawnPoint
   layers:
   - Default
   - TransparentFX
