@@ -10,6 +10,7 @@ TagManager:
   - HitTracker
   - CanvasMain
   - SpawnPoint
+  - ExampleHit
   layers:
   - Default
   - TransparentFX

@@ -276,6 +276,7 @@ public class SyncPosition : NetworkBehaviour
 
     public void SetNewTransform(int frameid)
     {
+        overRide = true;
         Debug.Log("Trying to read for frame: " + frameid);
         Debug.Log("Current Frame Time = " + Time.frameCount);
         Debug.Log("Oldest Key present = " + Keys[0]);

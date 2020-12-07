@@ -25,6 +25,10 @@ public class HitTracking : NetworkBehaviour
     [SerializeField]
     private bool useLatencyRewind = false;
 
+    [SyncVar]
+    [SerializeField]
+    public bool useRewindHitDetection = false;
+
     public float serverTickRate;
 
     // Start is called before the first frame update
@@ -102,17 +106,33 @@ public class HitTracking : NetworkBehaviour
 
         foreach(TrackedPlayer player in trackedPlayers)
         {
-            player.playerBody.GetComponent<SyncPosition>().SetNewTransform((int)frameTime);
+            if(!useRewindHitDetection)
+            {
+                player.playerBody.GetComponent<SyncPosition>().SetNewTransform((int)frameTime);
             // Physics.Raycast(rayOrigin,rayForward, out hitTemp, 500.0f);
             // if(hitTemp.collider.tag == "PlayerBody")
             // {
             // Debug.Log("Hit temp hit: " + hitTemp.collider.gameObject.transform.parent.transform.position);
             // }
-            Physics.Raycast(rayOrigin,rayForward, out hit, 500.0f);
-            if(hit.collider.tag == "PlayerBody")
-            {
-                break;
+                Physics.Raycast(rayOrigin,rayForward, out hit, 500.0f);
+                if(hit.collider.tag == "PlayerBody")
+                {
+                   break;
+                }
             }
+            else
+            {
+                //prevGameObject
+                Debug.Log("Should do this thing");
+                prevGameObject.transform.position = player.playerBody.GetComponent<SyncPosition>().GetTransformAtFrame((int)frameTime);
+                Physics.Raycast(rayOrigin, rayForward, out hit, 500.0f);
+                if(hit.collider.tag == "ExampleHit")
+                {
+                    Debug.Log("Succesfully hit yellow example!");
+                    break;
+                }
+            }
+
         }
         //Physics.Raycast(rayOrigin,rayForward, out hit, 500.0f);
         foreach(TrackedPlayer player in trackedPlayers)
@@ -224,6 +244,19 @@ public class HitTracking : NetworkBehaviour
     }
 
     [ClientRpc]
+    public void RpcChangeRewindHitDetection(bool isOn)
+    {
+        if(!isLocalPlayer)
+        {
+            useRewindHitDetection = isOn;
+        }
+        else
+        {
+            CmdChangeRewindHitDetection(isOn);
+        }
+    }
+
+    [ClientRpc]
     public void RpcChangeFrameRewind(bool isOn)
     {
          if(!isLocalPlayer)
@@ -245,6 +278,12 @@ public class HitTracking : NetworkBehaviour
     }
 
     [Command]
+    public void CmdChangeRewindHitDetection(bool isOn)
+    {
+        useRewindHitDetection = isOn;
+    }
+
+    [Command]
     public void CmdChangeFrameRewind(bool isOn)
     {
         useFrameRewind = isOn;
@@ -258,6 +297,11 @@ public class HitTracking : NetworkBehaviour
     public void UpdateUseLatencyRewind(bool value)
     {
         useLatencyRewind = value;
+    }
+
+    public void UpdateUseRewindHitDetection(bool value)
+    {
+        useRewindHitDetection = value;
     }
     // public struct PlayerPositions
     // {
