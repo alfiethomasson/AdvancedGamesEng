@@ -288,6 +288,7 @@ public class SyncPosition : NetworkBehaviour
 
     public void ResetTransform()
     {
+        Debug.Log("curTRANSFORM on reset = " + curTransform.position);
         curTransform.position = savedPos;
         overRide = false;
     }

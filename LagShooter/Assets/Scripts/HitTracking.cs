@@ -39,9 +39,12 @@ public class HitTracking : NetworkBehaviour
     void Update()
     {
         //Debug.Log("TrackedPlayers list count = " + trackedPlayers.Count);
+        if(useLatencyRewind)
+        {
         for(int i = 0; i < trackedPlayers.Count; i++)
         {
             trackedPlayers[i].Update();
+        }
         }
         //UpdateAllFrames();
     }
@@ -94,18 +97,33 @@ public class HitTracking : NetworkBehaviour
             frameTime--;
         }
 
+        RaycastHit hit = new RaycastHit();
+        //Physics.Raycast(rayOrigin,rayForward, out hit, 500.0f);
+
         foreach(TrackedPlayer player in trackedPlayers)
         {
             player.playerBody.GetComponent<SyncPosition>().SetNewTransform((int)frameTime);
+            // Physics.Raycast(rayOrigin,rayForward, out hitTemp, 500.0f);
+            // if(hitTemp.collider.tag == "PlayerBody")
+            // {
+            // Debug.Log("Hit temp hit: " + hitTemp.collider.gameObject.transform.parent.transform.position);
+            // }
+            Physics.Raycast(rayOrigin,rayForward, out hit, 500.0f);
+            if(hit.collider.tag == "PlayerBody")
+            {
+                break;
+            }
         }
-        RaycastHit hit;
-        Physics.Raycast(rayOrigin,rayForward, out hit, 500.0f);
+        //Physics.Raycast(rayOrigin,rayForward, out hit, 500.0f);
         foreach(TrackedPlayer player in trackedPlayers)
         {
-            player.playerBody.GetComponent<SyncPosition>().ResetTransform();
+           player.playerBody.GetComponent<SyncPosition>().ResetTransform();
         }
+
+        Debug.Log("Hit collider at: " + hit.collider.gameObject.transform.parent.transform.position);
         MoveObjectFrame(hit, frameTime);
         return hit;
+        
        }
        else
        {
