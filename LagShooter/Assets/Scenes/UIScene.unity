@@ -2493,7 +2493,7 @@ MonoBehaviour:
   spawnSystem: {fileID: 8702333085130539188, guid: 6f2734f6645f831478bdf2a11b0b58a4,
     type: 3}
   countdownActive: 0
-  defaultCountDown: 3
+  defaultCountDown: 10
   countdownTime: 10
   playerName: 
 --- !u!1 &1642110387

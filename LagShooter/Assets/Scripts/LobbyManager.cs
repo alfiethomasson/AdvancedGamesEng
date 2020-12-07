@@ -212,9 +212,9 @@ public class LobbyManager : NetworkManager
     {
         if(countdownActive && SceneManager.GetActiveScene().name == menuScene)
         {
-            Debug.Log("Countdown active!");
+            //Debug.Log("Countdown active!");
             countdownTime -= Time.deltaTime;
-            Debug.Log("Countdown time = " + countdownTime);
+            //Debug.Log("Countdown time = " + countdownTime);
             for(int i = 0; i < RoomPlayers.Count; i++)
             {
                 RoomPlayers[i].countdownTime = (int)countdownTime;

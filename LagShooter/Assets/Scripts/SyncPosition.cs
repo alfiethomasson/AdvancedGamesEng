@@ -244,12 +244,20 @@ public class SyncPosition : NetworkBehaviour
             Keys.RemoveAt(0);
             FrameData.Remove(key);
         }
-
+        Vector3 test;
+        if(FrameData.TryGetValue(Time.frameCount, out test))
+        {
+            FrameData[Time.frameCount] = curTransform.position;
+        }
+        else
+        {
+            FrameData.Add(Time.frameCount, curTransform.position);
+        }
         // if(FrameData[Time.frameCount] != null)
         // {
         //     FrameData.Remove(Time.frameCount);
         // }
-        FrameData.Add(Time.frameCount, curTransform.position);
+        //FrameData.Add(Time.frameCount, curTransform.position);
         Keys.Add(Time.frameCount);
         RpcUpdateFrameId(Time.frameCount);
         }

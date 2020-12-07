@@ -2749,7 +2749,7 @@ GameObject:
   - component: {fileID: 2104313215}
   - component: {fileID: 2104313214}
   - component: {fileID: 2104313217}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: RewindPosition
   m_TagString: ExampleHit
   m_Icon: {fileID: 0}

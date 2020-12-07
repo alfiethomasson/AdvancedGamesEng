@@ -31,12 +31,15 @@ public class HitTracking : NetworkBehaviour
 
     public float serverTickRate;
 
+    private LayerMask yellowMask;
+
     // Start is called before the first frame update
     void Start()
     {
         serverTickRate = 1.0f / 60.0f; 
         serverTickRate = serverTickRate * 1000.0f;   
         Debug.Log("Server Tick rate = " + serverTickRate);
+        yellowMask = LayerMask.GetMask("Player");
     }
 
     [Server]
@@ -125,7 +128,7 @@ public class HitTracking : NetworkBehaviour
                 //prevGameObject
                 Debug.Log("Should do this thing");
                 prevGameObject.transform.position = player.playerBody.GetComponent<SyncPosition>().GetTransformAtFrame((int)frameTime);
-                Physics.Raycast(rayOrigin, rayForward, out hit, 500.0f);
+                Physics.Raycast(rayOrigin, rayForward, out hit, 500.0f, ~yellowMask);
                 if(hit.collider.tag == "ExampleHit")
                 {
                     Debug.Log("Succesfully hit yellow example!");
@@ -140,7 +143,7 @@ public class HitTracking : NetworkBehaviour
            player.playerBody.GetComponent<SyncPosition>().ResetTransform();
         }
 
-        Debug.Log("Hit collider at: " + hit.collider.gameObject.transform.parent.transform.position);
+        //Debug.Log("Hit collider at: " + hit.collider.gameObject.transform.parent.transform.position);
         MoveObjectFrame(hit, frameTime);
         return hit;
         
@@ -149,6 +152,10 @@ public class HitTracking : NetworkBehaviour
        {
            RaycastHit hit;
            Physics.Raycast(rayOrigin, rayForward, out hit, 500.0f);
+           if(hit.collider.tag == "PlayerBody")
+           {
+           RpcMoveCurGameObject(hit.collider.gameObject.transform.parent.transform.position);
+           }
            return hit;
        }
     }
@@ -184,6 +191,10 @@ public class HitTracking : NetworkBehaviour
                     return;
                 }
             }
+        }
+        else if(hit.collider.tag == "ExampleHit")
+        {
+            RpcMovePrevGameObject(hit.collider.transform.position);
         }
     }
 
