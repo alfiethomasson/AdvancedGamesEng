@@ -40,6 +40,8 @@ public class Weapon : NetworkBehaviour
 
     private bool isReloading = false;
 
+    public SyncPosition syncPosParent;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -52,6 +54,7 @@ public class Weapon : NetworkBehaviour
         if(isLocalPlayer)
         {
             uiManager = GameObject.Find("CanvasMain").GetComponent<UIManager>();
+            syncPosParent = gameObject.GetComponentInParent<SyncPosition>();
         }
 
         curAmmo = maxAmmo;
@@ -90,7 +93,8 @@ public class Weapon : NetworkBehaviour
         //Fire weapon!
         if (Input.GetButtonDown ("Fire1") && ReadyToFire()) 
         {
-          //  Debug.Log("FIRING MY LAZOR!");
+            CmdUpdateAllFrames();
+            Debug.Log("FIRING MY LAZOR!");
             nextShot = Time.time + firerate;
             //StartCoroutine(Shot());
           //  laser.SetPosition(0, muzzle.position);
@@ -99,7 +103,23 @@ public class Weapon : NetworkBehaviour
            // laser.SetPosition(0, muzzle.position);
            curAmmo--;
            uiManager.UpdateAmmo(curAmmo, maxAmmo);
-            CmdCheckShot(latencyTime, rayOrigin, fpsCam.transform.forward);
+           RaycastHit hit;
+           Physics.Raycast(rayOrigin, fpsCam.transform.forward, out hit);
+           Debug.Log("Hit: " + hit.collider.tag);
+           //float frameTime = Time.frameCount;
+           float frameTime = syncPosParent.GetFrameId();
+            GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+            for(int i = 0; i < players.Length; i++)
+            {
+                Debug.Log("Position of player " + i + " at time of shooting: " + players[i].transform.position);
+            }
+           if(hit.collider.tag == "PlayerBody")
+           {
+               Debug.Log("Hit on local client");
+               //hitTracker.CmdMoveShotGameObject(hit.collider.gameObject.transform.parent.transform.position);
+               CmdBeginMove(hit.collider.gameObject.transform.parent.transform.position);
+           }
+            CmdCheckShot(latencyTime, rayOrigin, fpsCam.transform.forward, frameTime);
             // if (Physics.Raycast(rayOrigin,fpsCam.transform.forward, out hit, range))
             // {
             //     laser.SetPosition(1, hit.point);
@@ -120,6 +140,20 @@ public class Weapon : NetworkBehaviour
         }
     }
 
+    [Command]
+    public void CmdUpdateAllFrames()
+    {
+        hitTracker.UpdateAllFrames();
+    }
+
+    [Command]
+    public void CmdBeginMove(Vector3 toMove)
+    {
+        Debug.Log("CmdBeginMove");
+        toMove.y = 1.0f;
+        hitTracker.RpcMoveShotGameObject(toMove);
+    }
+
     private bool ReadyToFire()
     {
         if(Time.time > nextShot && curAmmo > 0 && !isReloading)
@@ -133,12 +167,12 @@ public class Weapon : NetworkBehaviour
     }
 
     [Command]
-    public void CmdCheckShot(double latency, Vector3 rayOrigin, Vector3 rayPoint)
+    public void CmdCheckShot(double latency, Vector3 rayOrigin, Vector3 rayPoint, float framecount)
     {
         RaycastHit hit;
         // laser.SetPosition(0, muzzle.position);
         //Debug.Log("heyo");
-        hit = hitTracker.BeginComputeHit(latency, rayOrigin, rayPoint);
+        hit = hitTracker.BeginComputeHit(latency, rayOrigin, rayPoint, framecount);
 
         laser.SetPosition(0, muzzle.position);
         laser.SetPosition(1, hit.point);
@@ -156,6 +190,7 @@ public class Weapon : NetworkBehaviour
                 //laser.SetPosition(1, hit.point);
               // RpcShowLine(hit.transform.position);
                    // dealDamage(hit);
+                  // hitTracker.RpcMoveShotGameObject(hitClient.collider.gameObject.transform.parent.transform.position);
                    GameObject enemy = hit.collider.gameObject;
                    PlayerController enemyController = enemy.GetComponentInParent<PlayerController>();
                    enemyController.TakeDamage(40, GetComponentInParent<NetworkIdentity>().netId);

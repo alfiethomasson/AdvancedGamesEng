@@ -12,6 +12,18 @@ public class HitTracking : NetworkBehaviour
 
     [SerializeField]
     private GameObject prevGameObject;
+    [SerializeField]
+    private GameObject curGameObject;
+    [SerializeField]
+    private GameObject shotGameObject;
+
+    [SyncVar]
+    [SerializeField]
+    private bool useFrameRewind = false;
+    
+    [SyncVar]
+    [SerializeField]
+    private bool useLatencyRewind = false;
 
     public float serverTickRate;
 
@@ -31,6 +43,7 @@ public class HitTracking : NetworkBehaviour
         {
             trackedPlayers[i].Update();
         }
+        //UpdateAllFrames();
     }
 
     public void AddPlayerToList(GameObject newPlayer)
@@ -42,17 +55,19 @@ public class HitTracking : NetworkBehaviour
     }
 
     [Server]
-    public RaycastHit BeginComputeHit(double latency, Vector3 rayOrigin, Vector3 rayForward)
+    public RaycastHit BeginComputeHit(double latency, Vector3 rayOrigin, Vector3 rayForward, float frameTime)
     {
         //Debug.Log("BEGIN COMPUTING HIT ITS AWESOME");
        // Debug.Log("Server Tick Rate * 1000 = " + (int)(serverTickRate));
        // Debug.Log("Latency Time * 1000 = " + (int)(latency * 1000));
+       if(useLatencyRewind)
+       {
         latency = latency * 1000;
-        int calculatedPosition = (int)Mathf.Floor((float)latency / (float)serverTickRate);
+         int calculatedPosition = (int)Mathf.Floor((float)(latency * 4) / (float)serverTickRate);
         if(calculatedPosition > 119) {calculatedPosition = 119;}
         calculatedPosition = 119 - calculatedPosition;
+        calculatedPosition = 0;
          Debug.Log("Calculated Position = " + (int)calculatedPosition);
-         calculatedPosition = 0;
 
         foreach(TrackedPlayer player in trackedPlayers)
         {
@@ -65,11 +80,42 @@ public class HitTracking : NetworkBehaviour
         }
         RaycastHit hit;
         Physics.Raycast(rayOrigin,rayForward, out hit, 500.0f);
-        StartCoroutine(ParallelMoveObject(hit, calculatedPosition));
+
+        MoveObjectRtt(hit, calculatedPosition);
+
         return hit;
+
+       }
+       else if(useFrameRewind)
+       {
+
+        if(frameTime == Time.frameCount)
+        {
+            frameTime--;
+        }
+
+        foreach(TrackedPlayer player in trackedPlayers)
+        {
+            player.playerBody.GetComponent<SyncPosition>().SetNewTransform((int)frameTime);
+        }
+        RaycastHit hit;
+        Physics.Raycast(rayOrigin,rayForward, out hit, 500.0f);
+        foreach(TrackedPlayer player in trackedPlayers)
+        {
+            player.playerBody.GetComponent<SyncPosition>().ResetTransform();
+        }
+        MoveObjectFrame(hit, frameTime);
+        return hit;
+       }
+       else
+       {
+           RaycastHit hit;
+           Physics.Raycast(rayOrigin, rayForward, out hit, 500.0f);
+           return hit;
+       }
     }
 
-    private IEnumerator ParallelMoveObject(RaycastHit hit, int calculatedPos)
+    private void MoveObjectRtt(RaycastHit hit, int calculatedPos)
     {
         if(hit.collider.tag == "PlayerBody")
         {
@@ -79,19 +125,122 @@ public class HitTracking : NetworkBehaviour
                 {
                     prevGameObject.transform.position = p.positions[calculatedPos];
                     RpcMovePrevGameObject(p.positions[calculatedPos]);
-                    yield break;
+                    RpcMoveCurGameObject(p.positions[119]);
+                    return;
                 }
             }
+        }
+    }
+
+    private void MoveObjectFrame(RaycastHit hit, float frameCount)
+    {
+        if(hit.collider.tag == "PlayerBody")
+        {
+           foreach(TrackedPlayer p in trackedPlayers)
+            {
+                if(p.playerBody.GetComponentInChildren<CapsuleCollider>() == hit.collider)
+                {
+                    RpcMovePrevGameObject(p.playerBody.GetComponent<SyncPosition>().GetTransformAtFrame((int) frameCount));
+                    int maxFrame = p.playerBody.GetComponent<SyncPosition>().GetRecentFrameid();
+                    RpcMoveCurGameObject(p.playerBody.GetComponent<SyncPosition>().GetTransformAtFrame(maxFrame));
+                    return;
+                }
+            }
+        }
+    }
+
+    public void UpdateAllFrames()
+    {
+        foreach(TrackedPlayer p in trackedPlayers)
+        {
+            p.playerBody.GetComponent<SyncPosition>().UpdateFrameData();
         }
     }
 
     [ClientRpc]
     public void RpcMovePrevGameObject(Vector3 toMove)
     {
+        Debug.Log("Rewind Position = " + toMove);
         toMove.y = 1.0f;
         prevGameObject.transform.position = toMove;
     }
 
+    [ClientRpc]
+    public void RpcMoveCurGameObject(Vector3 toMove)
+    {
+        Debug.Log("Most recent server update = " + toMove);
+        toMove.y = 1.0f;
+        curGameObject.transform.position = toMove;
+    }
+
+    [ClientRpc]
+    public void RpcMoveShotGameObject(Vector3 toMove)
+    {
+        Debug.Log("Trying to move shot object");
+        Debug.Log("Shot Player!  Shot position = " + toMove);
+        toMove.y = 1.0f;
+        shotGameObject.transform.position = toMove;
+    }
+
+    [Command]
+    public void CmdMoveShotGameObject(Vector3 toMove)
+    {
+        toMove.y = 1.0f;
+        shotGameObject.transform.position = toMove;
+        RpcMoveShotGameObject(toMove);
+    }
+
+    [ClientRpc]
+    public void RpcChangeLatencyRewind(bool isOn)
+    {
+         if(!isLocalPlayer)
+        {
+           // Debug.Log("Calling on this client!");
+            useLatencyRewind = isOn;
+        }
+        else
+        {
+            //Debug.Log("Calling on this client!");
+            CmdChangeLatencyRewind(isOn);
+        }
+    }
+
+    [ClientRpc]
+    public void RpcChangeFrameRewind(bool isOn)
+    {
+         if(!isLocalPlayer)
+        {
+           // Debug.Log("Calling on this client!");
+            useFrameRewind = isOn;
+        }
+        else
+        {
+            //Debug.Log("Calling on this client!");
+            CmdChangeFrameRewind(isOn);
+        }
+    }
+
+    [Command]
+    public void CmdChangeLatencyRewind(bool isOn)
+    {
+        useLatencyRewind = isOn;
+    }
+
+    [Command]
+    public void CmdChangeFrameRewind(bool isOn)
+    {
+        useFrameRewind = isOn;
+    }
+
+    public void UpdateUseFrameRewind(bool value)
+    {
+        useFrameRewind = value;
+    }
+
+    public void UpdateUseLatencyRewind(bool value)
+    {
+        useLatencyRewind = value;
+    }
     // public struct PlayerPositions
     // {
     //     public GameObject playerBody;

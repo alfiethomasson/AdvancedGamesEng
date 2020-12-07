@@ -368,6 +368,7 @@ MonoBehaviour:
   uiManager: {fileID: 0}
   curAmmo: 0
   maxAmmo: 10
+  syncPosParent: {fileID: 0}
 --- !u!114 &7053365433093261883
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -411,11 +412,13 @@ MonoBehaviour:
   moveSpeed: 10
   normLerpRate: 15
   fastLerpRate: 25
-  threshold: 0.2
+  threshold: 0
   useAutomaticToggle: 0
   useHistoricalLerp: 0
   useDeadReckoning: 0
   useInterpolation: 0
+  hitTracker: {fileID: 0}
+  Keys: 
 --- !u!114 &5822352529682612115
 MonoBehaviour:
   m_ObjectHideFlags: 0

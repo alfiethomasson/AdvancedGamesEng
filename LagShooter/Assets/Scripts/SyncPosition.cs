@@ -46,18 +46,39 @@ public class SyncPosition : NetworkBehaviour
     [SerializeField]
     private bool useInterpolation = true;
 
+    [SyncVar]
+    [SerializeField]
+    private bool useLatencyRewind = false;
+
+    [SyncVar]
+    [SerializeField]
+    private bool useFrameRewind = false;
+
     private float closeness = 0.1f;
 
     [SyncVar]
     private Vector3 pastMove;
 
+    [SerializeField]
+    private HitTracking hitTracker;
+
     NetworkPingDisplay networkPingDisplay;
+
+    public Dictionary<int, Vector3> FrameData = new Dictionary<int, Vector3>();
+    public List<int> Keys = new List<int>();
+
+    private Vector3 savedPos = new Vector3();
+
+    private static int frameid;
+
+    private bool overRide = false;
 
     void Start()
     {
         lerpRate = normLerpRate;
         networkPingDisplay = GameObject.Find("Network Manager").GetComponent<NetworkPingDisplay>();
         syncPos = curTransform.position;
+        hitTracker = GameObject.Find("HitTracker").GetComponent<HitTracking>();
     }
 
     // Update is called once per frame
@@ -72,8 +93,14 @@ public class SyncPosition : NetworkBehaviour
 
     void FixedUpdate()
     {
-        RpcSendToClient();
+         RpcSendToClient();
     }
+
+    // [Command]
+    // private void CmdSendToClient()
+    // {
+    //     RpcSendToClient();
+    // }
 
     //If automatic is selected
     void CheckPing()
@@ -119,6 +146,8 @@ public class SyncPosition : NetworkBehaviour
 
     void NormalLerp()
     {
+        if(!overRide)
+        {
         if(useInterpolation)
         {
             if(useDeadReckoning)
@@ -149,7 +178,8 @@ public class SyncPosition : NetworkBehaviour
         }
         if(useDeadReckoning)
         {
-            //curTransform.position += (pastMove * moveSpeed * Time.deltaTime);
+            curTransform.position += (pastMove * moveSpeed * Time.deltaTime);
+        }
         }
     }
 
@@ -186,8 +216,13 @@ public class SyncPosition : NetworkBehaviour
     [Command]
     void CmdSendPosition(Vector3 pos)
     {
+        Debug.Log("SENDING POSITTION");
+        Debug.Log("here in sync pos");
         syncPos = pos;
         pastMove = syncPos - curTransform.position;
+        hitTracker.UpdateAllFrames();
+       // hitTracker.UpdateAllFrames();
+        //UpdateFrameData();
         // if(useHistoricalLerp)
         // {
         //     syncPosList.Add(pos);
@@ -195,6 +230,71 @@ public class SyncPosition : NetworkBehaviour
        // pastMove = new Vector3(pastMove.x, 0, pastMove.z);
         //Debug.Log(pastMove);
         //lastPos = syncPos - curTransform.position;
+    }
+
+    [Server]
+    public void UpdateFrameData()
+    {
+        if(!overRide)
+        {
+        //Debug.Log("Updating Frame Data");
+        if(Keys.Count > 120)
+        {
+            int key = Keys[0];
+            Keys.RemoveAt(0);
+            FrameData.Remove(key);
+        }
+
+        // if(FrameData[Time.frameCount] != null)
+        // {
+        //     FrameData.Remove(Time.frameCount);
+        // }
+        FrameData.Add(Time.frameCount, curTransform.position);
+        Keys.Add(Time.frameCount);
+        RpcUpdateFrameId(Time.frameCount);
+        }
+        //Debug.Log("Adding new item tto dictionary:  At Frame Count" + Time.frameCount);
+    }
+
+    [ClientRpc]
+    public void RpcUpdateFrameId(int frameId)
+    {
+        //Debug.Log("Updating frameid here! : " + frameid);
+        //curTransform.position = syncPos;
+        frameid = frameId;
+    }
+
+    public int GetFrameId()
+    {
+        return frameid;
+    }
+
+    public int GetRecentFrameid()
+    {
+        return Keys[Keys.Count - 1];
+    }
+
+    public void SetNewTransform(int frameid)
+    {
+        Debug.Log("Trying to read for frame: " + frameid);
+        Debug.Log("Current Frame Time = " + Time.frameCount);
+        Debug.Log("Oldest Key present = " + Keys[0]);
+        savedPos = curTransform.position;
+        Debug.Log("Setting this to: " + FrameData[frameid]);
+        //curTransform.position = Vector3.Lerp(FrameData[frameid], FrameData[frameid], lerpRate);
+        curTransform.position = FrameData[frameid];
+        overRide = true;
+    }
+
+    public void ResetTransform()
+    {
+        curTransform.position = savedPos;
+        overRide = false;
+    }
+
+    public Vector3 GetTransformAtFrame(int frameid)
+    {
+        return FrameData[frameid];
     }
     
     [ClientRpc]
@@ -207,6 +307,7 @@ public class SyncPosition : NetworkBehaviour
         if(Vector3.Distance(curTransform.position, lastPos) > threshold)
         {
             //Debug.Log("THREHOLD EXCEEDED: last pos = " + lastPos);
+           // Debug.Log("Should send command");
             CmdSendPosition(curTransform.position);
             lastPos = curTransform.position;
         }
@@ -234,8 +335,11 @@ public class SyncPosition : NetworkBehaviour
     [Command]
     public void CmdRespawn(Vector3 newPos)
     {
+        if(!overRide)
+        {
         syncPos = newPos;
         curTransform.position = newPos;
+        }
     }
 
     [ClientRpc]
@@ -286,6 +390,40 @@ public class SyncPosition : NetworkBehaviour
             //Debug.Log("Calling on this client!");
             CmdChangeExtrapolation(isOn);
             Toggle tog = GameObject.Find("Extrapolation").GetComponent<Toggle>();
+           tog.isOn = isOn;
+        }
+    }
+
+    [ClientRpc]
+    public void RpcChangeFrameRewind(bool isOn)
+    {
+        if(!isLocalPlayer)
+        {
+           // Debug.Log("Calling on this client!");
+            useFrameRewind = isOn;
+        }
+        else
+        {
+            //Debug.Log("Calling on this client!");
+            CmdChangeFrameRewind(isOn);
+            Toggle tog = GameObject.Find("FrameRewind").GetComponent<Toggle>();
+           tog.isOn = isOn;
+        }
+    }
+
+    [ClientRpc]
+    public void RpcChangeLatencyRewind(bool isOn)
+    {
+        if(!isLocalPlayer)
+        {
+           // Debug.Log("Calling on this client!");
+            useLatencyRewind = isOn;
+        }
+        else
+        {
+            //Debug.Log("Calling on this client!");
+            CmdChangeLatencyRewind(isOn);
+            Toggle tog = GameObject.Find("LatencyRewind").GetComponent<Toggle>();
            tog.isOn = isOn;
         }
     }
@@ -344,6 +482,22 @@ public class SyncPosition : NetworkBehaviour
     {
         useAutomaticToggle = isOn;
         Toggle tog = GameObject.Find("Automatic").GetComponent<Toggle>();
+        tog.isOn = isOn;
+    }
+
+    [Command]
+    public void CmdChangeLatencyRewind(bool isOn)
+    {
+        useLatencyRewind = isOn;
+        Toggle tog = GameObject.Find("LatencyRewind").GetComponent<Toggle>();
+        tog.isOn = isOn;
+    }
+
+    [Command]
+    public void CmdChangeFrameRewind(bool isOn)
+    {
+        useFrameRewind = isOn;
+        Toggle tog = GameObject.Find("FrameRewind").GetComponent<Toggle>();
         tog.isOn = isOn;
     }
 }
