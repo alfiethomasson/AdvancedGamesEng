@@ -3,6 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using Mirror;
 
+/*
+********************************************************************************************************************
+This script syncs rotation of players on clients
+Currently it is not set to use any lag compensation techniques and is just bare bones, but syncs rotation correctly
+The method of syncing is near identical to SyncPosition
+********************************************************************************************************************
+*/
+
 public class SyncRotation : NetworkBehaviour
 {
     [SyncVar (hook = nameof(RpcPlayerRotationSync))]
@@ -50,7 +58,6 @@ public class SyncRotation : NetworkBehaviour
         lerpRate = normalLerpRate;
     }
 
-    // Update is called once per frame
     void Update()
     {
         lerpRotate();
@@ -67,21 +74,17 @@ public class SyncRotation : NetworkBehaviour
         {
             if(useHistoricalLerp)
             {
-             //   Debug.Log("Should historical Lerp");
                 HistoricalLerp();
             }
             else
             {
                 NormalLerp();
             }
-       // curTransform.rotation = Quaternion.Lerp(curTransform.rotation, syncPlayerRotation, Time.deltaTime * lerpRate);
-        //camTransform.rotation = Quaternion.Lerp(camTransform.rotation, syncCamRotation, Time.deltaTime * lerpRate);
         }
     }
 
     void HistoricalLerp()
     {
-        Debug.Log(syncPlayerRotationList.Count + "  Player Rotation List");
         if(syncPlayerRotationList.Count > 0)
         {
             LerpPlayerRot(syncPlayerRotationList[0]);
@@ -100,7 +103,6 @@ public class SyncRotation : NetworkBehaviour
             }
         }
 
-        Debug.Log(syncCamRotList.Count + "  Camera Rotation List");
         if(syncCamRotList.Count > 0)
         {
             LerpCamRot(syncCamRotList[0]);
@@ -114,7 +116,6 @@ public class SyncRotation : NetworkBehaviour
     void NormalLerp()
     {
         LerpPlayerRot(syncPlayerRotation);
-       // LerpCamRot(syncCamRotation);
     }
 
     void LerpPlayerRot(float newRot)
@@ -158,7 +159,6 @@ public class SyncRotation : NetworkBehaviour
     [Command]
     void CmdSendRotate(float playerRot, float camRot)
     {
-        //Debug.Log("Transmitting rotation!");
         syncPlayerRotation = playerRot;
         syncCamRotation = camRot;
     }
@@ -168,7 +168,6 @@ public class SyncRotation : NetworkBehaviour
     {
         if(isLocalPlayer)
         {
-            //if(Quaternion.Angle(curTransform.rotation, lastPlayerRot) > threshold || Quaternion.Angle(camTransform.rotation, lastCamRot) > threshold)
             if(CheckThreshold(curTransform.localEulerAngles.y, lastPlayerRot) || CheckThreshold(camTransform.localEulerAngles.x, lastCamRot))
             {
                 lastPlayerRot = curTransform.localEulerAngles.y;
@@ -181,13 +180,11 @@ public class SyncRotation : NetworkBehaviour
     [ClientRpc]
     void RpcPlayerRotationSync(float oldrot, float newrot)
     {
-        Debug.Log("Rotate called");
         syncPlayerRotation = newrot;
         if(useHistoricalLerp)
         {
-        syncPlayerRotationList.Add(syncPlayerRotation);
+            syncPlayerRotationList.Add(syncPlayerRotation);
         }
-       //  Debug.Log("Player List Count = " + syncCamRotList.Count);
     }
 
     [ClientRpc]
@@ -196,9 +193,8 @@ public class SyncRotation : NetworkBehaviour
         syncCamRotation = newrot;
         if(useHistoricalLerp)
         {
-        syncCamRotList.Add(syncCamRotation);
+            syncCamRotList.Add(syncCamRotation);
         }
-       // Debug.Log("Cam List Count = " + syncCamRotList.Count);
     }
 
     [ClientRpc]
@@ -206,9 +202,9 @@ public class SyncRotation : NetworkBehaviour
     {
         if(!isLocalPlayer)
         {
-        syncPlayerRotationList.Clear();
-        syncCamRotList.Clear();
-        useHistoricalLerp = isOn;
+            syncPlayerRotationList.Clear();
+            syncCamRotList.Clear();
+            useHistoricalLerp = isOn;
         }
     }
 
@@ -217,16 +213,7 @@ public class SyncRotation : NetworkBehaviour
     {
         if(!isLocalPlayer)
         {
-        useInterpolation = isOn;    
+            useInterpolation = isOn;    
         }
     }
-
-    // [ClientRpc]
-    // public void RpcChangeExtrapolation()
-    // {
-    //     if(isLocalPlayer)
-    //     {
-    //     = !useInterpolation;
-    //     }
-    // }
 }

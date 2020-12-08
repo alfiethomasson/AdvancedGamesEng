@@ -36,98 +36,105 @@ public class HitTracking : NetworkBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        //Sets the variable of server tick rate
         serverTickRate = 1.0f / 60.0f; 
+        //Multiplied by 1000 for ease of viewing and calculations
         serverTickRate = serverTickRate * 1000.0f;   
         Debug.Log("Server Tick rate = " + serverTickRate);
+        //Layermask used for rewind hit detection (Currently not working)
         yellowMask = LayerMask.GetMask("Player");
     }
 
+    //Update only called on server
     [Server]
     void Update()
     {
-        //Debug.Log("TrackedPlayers list count = " + trackedPlayers.Count);
-        if(useLatencyRewind)
+        if(useLatencyRewind) //If latency rewind is active
         {
-        for(int i = 0; i < trackedPlayers.Count; i++)
-        {
-            trackedPlayers[i].Update();
+            for(int i = 0; i < trackedPlayers.Count; i++)
+            {
+                trackedPlayers[i].Update(); // Call update on all players in list
+            }
         }
-        }
-        //UpdateAllFrames();
     }
 
+    //Add player to tracked players
     public void AddPlayerToList(GameObject newPlayer)
     {
-        playerGameObjects.Add(newPlayer);
-        TrackedPlayer tempPlayer = new TrackedPlayer(newPlayer.gameObject);
-       // tempPlayer.SetPlayerBody(newPlayer);
+        playerGameObjects.Add(newPlayer); //Add to list of game objects
+        //Temporary class trackedplayer based on game object
+        TrackedPlayer tempPlayer = new TrackedPlayer(newPlayer.gameObject); 
+        //add player to list 
         trackedPlayers.Add(tempPlayer);
     }
 
+    //Only ran on server, is called by Weapons to calculate whether or not they hit on the server
     [Server]
     public RaycastHit BeginComputeHit(double latency, Vector3 rayOrigin, Vector3 rayForward, float frameTime)
     {
-        //Debug.Log("BEGIN COMPUTING HIT ITS AWESOME");
-       // Debug.Log("Server Tick Rate * 1000 = " + (int)(serverTickRate));
-       // Debug.Log("Latency Time * 1000 = " + (int)(latency * 1000));
-       if(useLatencyRewind)
+       if(useLatencyRewind) //If using latency rewind
        {
+        //Multiply latency by 1000 for ease of viewing and calculations
         latency = latency * 1000;
-         int calculatedPosition = (int)Mathf.Floor((float)(latency * 2) / (float)serverTickRate);
+        //This gets the position in list of gameobjects that the player should have been viewing at the time they fired 
+        //Currently does not work as intended
+        int calculatedPosition = (int)Mathf.Floor((float)(latency * 4) / (float)serverTickRate);
+        //If higher latency than tracked, reset to max.
         if(calculatedPosition > 119) {calculatedPosition = 119;}
+        //Subtract calculated position from 119, this is because the oldest values in the list are at list[0]
         calculatedPosition = 119 - calculatedPosition;
-         Debug.Log("Calculated Position = " + (int)calculatedPosition);
+        Debug.Log("Calculated Position = " + (int)calculatedPosition);
 
+        //Loops through all tracked players
         foreach(TrackedPlayer player in trackedPlayers)
         {
-            //Debug.Log("Player currently at: " + player.playerBody.transform.position);
-           // Debug.Log("Player moving to: " + player.positions[calculatedPosition].position);
+            //And moves them to calculated position for shot detection 
             player.playerBody.transform.position = player.positions[calculatedPosition];
-            //prevGameObject.transform.position = player.positions[calculatedPosition];
-           // Debug.Log("Positions number 0: " + player.positions[0]);
-           // Debug.Log("Positions number 119: " + player.positions[119]);
         }
         RaycastHit hit;
+        //Shoots ray 
         Physics.Raycast(rayOrigin,rayForward, out hit, 500.0f);
 
+        //Moves capsules to calculated positions 
         MoveObjectRtt(hit, calculatedPosition);
 
         return hit;
 
        }
-       else if(useFrameRewind)
+       else if(useFrameRewind) //Using frame rewind 
        {
 
+        //Ensures the value recieved is not equal to current frame count as this throws error
         if(frameTime == Time.frameCount)
         {
             frameTime--;
         }
 
         RaycastHit hit = new RaycastHit();
-        //Physics.Raycast(rayOrigin,rayForward, out hit, 500.0f);
 
+        //Loops through all players in tracked players
         foreach(TrackedPlayer player in trackedPlayers)
         {
+            //If not using rewind hit detection (using capsules to check hits instead of actual players)
             if(!useRewindHitDetection)
             {
+                //Calls function SetNewTransform for player, should move it back to where it was when player shot 
                 player.playerBody.GetComponent<SyncPosition>().SetNewTransform((int)frameTime);
-            // Physics.Raycast(rayOrigin,rayForward, out hitTemp, 500.0f);
-            // if(hitTemp.collider.tag == "PlayerBody")
-            // {
-            // Debug.Log("Hit temp hit: " + hitTemp.collider.gameObject.transform.parent.transform.position);
-            // }
+                //Shoots ray 
                 Physics.Raycast(rayOrigin,rayForward, out hit, 500.0f);
+                //If hit player, break out of loop 
                 if(hit.collider.tag == "PlayerBody")
                 {
                    break;
                 }
             }
-            else
+            else // If using rewind hit detection by moving capsules instead of players (WIP, not currently working as intended)
             {
-                //prevGameObject
-                Debug.Log("Should do this thing");
+                //Sets the capsule position to calculated frame position using frame time
                 prevGameObject.transform.position = player.playerBody.GetComponent<SyncPosition>().GetTransformAtFrame((int)frameTime);
+                //Shoots ray, ommiting players 
                 Physics.Raycast(rayOrigin, rayForward, out hit, 500.0f, ~yellowMask);
+                //If Ray hits capsule
                 if(hit.collider.tag == "ExampleHit")
                 {
                     Debug.Log("Succesfully hit yellow example!");
@@ -136,39 +143,47 @@ public class HitTracking : NetworkBehaviour
             }
 
         }
-        //Physics.Raycast(rayOrigin,rayForward, out hit, 500.0f);
+        //Move players back to where they were before 
         foreach(TrackedPlayer player in trackedPlayers)
         {
            player.playerBody.GetComponent<SyncPosition>().ResetTransform();
         }
 
-        //Debug.Log("Hit collider at: " + hit.collider.gameObject.transform.parent.transform.position);
+        //Function that moves capsules to calculated position to view rewind
         MoveObjectFrame(hit, frameTime);
         return hit;
         
        }
-       else
+       else //No rewind
        {
            RaycastHit hit;
+           //Shoot ray 
            Physics.Raycast(rayOrigin, rayForward, out hit, 500.0f);
-           if(hit.collider.tag == "PlayerBody")
+           if(hit.collider.tag == "PlayerBody") // If player is hit 
            {
-           RpcMoveCurGameObject(hit.collider.gameObject.transform.parent.transform.position);
+                //Move capsuule on all clients to view shot
+                RpcMoveCurGameObject(hit.collider.gameObject.transform.parent.transform.position);
            }
            return hit;
        }
     }
 
+    //Move capsules based on Latency Rewind   
     private void MoveObjectRtt(RaycastHit hit, int calculatedPos)
     {
+        //If player hit 
         if(hit.collider.tag == "PlayerBody")
         {
-            foreach(TrackedPlayer p in trackedPlayers)
+            foreach(TrackedPlayer p in trackedPlayers) //Loops through all tracked players
             {
+                //Checks if player was the one that was hit
                 if(p.playerBody.GetComponentInChildren<CapsuleCollider>() == hit.collider)
                 {
+                    //Move capsule to calculated position on server
                     prevGameObject.transform.position = p.positions[calculatedPos];
+                    //Move yellow capsule to calculated position on clients
                     RpcMovePrevGameObject(p.positions[calculatedPos]);
+                    //Move blue capsule to where player is on server
                     RpcMoveCurGameObject(p.positions[119]);
                     return;
                 }
@@ -176,27 +191,35 @@ public class HitTracking : NetworkBehaviour
         }
     }
 
+    //Move capsules based on Frame Rewind
     private void MoveObjectFrame(RaycastHit hit, float frameCount)
     {
+        //If player hit
         if(hit.collider.tag == "PlayerBody")
         {
-           foreach(TrackedPlayer p in trackedPlayers)
+           foreach(TrackedPlayer p in trackedPlayers) //Loops through all tracked players
             {
+                //Checks if player was the one that was hit 
                 if(p.playerBody.GetComponentInChildren<CapsuleCollider>() == hit.collider)
                 {
+                    //Move yellow capsule to calculated position on clients 
                     RpcMovePrevGameObject(p.playerBody.GetComponent<SyncPosition>().GetTransformAtFrame((int) frameCount));
+                    //Gets most recent frame count
                     int maxFrame = p.playerBody.GetComponent<SyncPosition>().GetRecentFrameid();
+                    //Move blue capsule to where player is on server
                     RpcMoveCurGameObject(p.playerBody.GetComponent<SyncPosition>().GetTransformAtFrame(maxFrame));
                     return;
                 }
             }
         }
-        else if(hit.collider.tag == "ExampleHit")
+        else if(hit.collider.tag == "ExampleHit") //Used for rewind hit detection (Currently not working as intended)
         {
+            //Moves yellow capsule to hit position
             RpcMovePrevGameObject(hit.collider.transform.position);
         }
     }
 
+    //Calls UpdateFrameData on all tracked players to keep frame data up to date
     public void UpdateAllFrames()
     {
         foreach(TrackedPlayer p in trackedPlayers)
@@ -204,6 +227,10 @@ public class HitTracking : NetworkBehaviour
             p.playerBody.GetComponent<SyncPosition>().UpdateFrameData();
         }
     }
+
+    /*
+    Functions to move capsules to target position on server and clients
+    */ 
 
     [ClientRpc]
     public void RpcMovePrevGameObject(Vector3 toMove)
@@ -243,12 +270,10 @@ public class HitTracking : NetworkBehaviour
     {
          if(!isLocalPlayer)
         {
-           // Debug.Log("Calling on this client!");
             useLatencyRewind = isOn;
         }
         else
         {
-            //Debug.Log("Calling on this client!");
             CmdChangeLatencyRewind(isOn);
         }
     }
@@ -271,12 +296,10 @@ public class HitTracking : NetworkBehaviour
     {
          if(!isLocalPlayer)
         {
-           // Debug.Log("Calling on this client!");
             useFrameRewind = isOn;
         }
         else
         {
-            //Debug.Log("Calling on this client!");
             CmdChangeFrameRewind(isOn);
         }
     }
@@ -313,20 +336,4 @@ public class HitTracking : NetworkBehaviour
     {
         useRewindHitDetection = value;
     }
-    // public struct PlayerPositions
-    // {
-    //     public GameObject playerBody;
-    //     public List<Transform> positions;
-
-    //     [Server]
-    //     void Update()
-    //     {
-    //         positions.Add(playerBody.transform);
-    //         if(positions.Count > 60)
-    //         {
-    //             positions.RemoveAt(0);
-    //         }
-    //         Debug.Log("Positions count = " + positions.Count);
-    //     }
-    // }
 }

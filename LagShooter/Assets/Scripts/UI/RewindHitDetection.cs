@@ -19,20 +19,9 @@ public class RewindHitDetection : MonoBehaviour
 
     void ToggleValueChanged(Toggle change)
     {
-        // GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
-
-        // foreach(GameObject player in players)
-        // {
-        //     player.GetComponent<SyncPosition>().RpcChangeLatencyRewind(myToggle.isOn);
             HitTracking hitTracker = GameObject.Find("HitTracker").GetComponent<HitTracking>();
             hitTracker.RpcChangeRewindHitDetection(myToggle.isOn);
-            //hitTracker.CmdChangeRewindHitDetection(myToggle.isOn);
             hitTracker.UpdateUseRewindHitDetection(myToggle.isOn);
             prevCapsule.enabled = myToggle.isOn;
-            
-
-        //     hitTracker.RpcChangeLatencyRewind(myToggle.isOn);
-        //    // player.GetComponent<SyncRotation>().RpcChangeInterpolation();
-        //     hitTracker.UpdateUseLatencyRewind(myToggle.isOn);
         }
 }

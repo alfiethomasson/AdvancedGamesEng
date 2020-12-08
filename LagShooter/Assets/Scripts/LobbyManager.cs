@@ -214,8 +214,10 @@ public class LobbyManager : NetworkManager
         }
     }
 
+    //Called on server when client is ready 
     public override void OnServerReady(NetworkConnection connection)
     {
+        //Base method 
         base.OnServerReady(connection);
 
         OnServerReadied?.Invoke(connection);

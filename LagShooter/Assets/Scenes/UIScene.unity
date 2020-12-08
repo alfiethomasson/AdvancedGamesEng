@@ -1077,7 +1077,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   networkManager: {fileID: 1580948800}
-  landingPagePanel: {fileID: 1120277846}
 --- !u!1 &690304142
 GameObject:
   m_ObjectHideFlags: 0
@@ -2476,7 +2475,7 @@ MonoBehaviour:
   offlineScene: 
   onlineScene: Assets/Scenes/UIScene.unity
   transport: {fileID: 1580948799}
-  networkAddress: 192.168.1.161
+  networkAddress: localhost
   maxConnections: 4
   disconnectInactiveConnections: 0
   disconnectInactiveTimeout: 60
@@ -2495,7 +2494,6 @@ MonoBehaviour:
   countdownActive: 0
   defaultCountDown: 10
   countdownTime: 10
-  playerName: 
 --- !u!1 &1642110387
 GameObject:
   m_ObjectHideFlags: 0
