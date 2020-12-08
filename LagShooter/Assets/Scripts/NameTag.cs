@@ -85,6 +85,7 @@ public class NameTag : NetworkBehaviour
         }
     }
 
+	[Command]
     public void UpdateAllTags()
     {
         GameObject[] players;
