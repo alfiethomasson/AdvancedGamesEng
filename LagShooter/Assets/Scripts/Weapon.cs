@@ -47,10 +47,8 @@ public class Weapon : NetworkBehaviour
     {
         laser = GetComponent<LineRenderer>();
         fpsCam = GetComponentInChildren<Camera>();
-        //Debug.Log("Should find canvas");
         hitTrackerGameObject = GameObject.Find("HitTracker");
         hitTracker = hitTrackerGameObject.GetComponent<HitTracking>();
-        // Debug.Log("Should find canvas");
         if(isLocalPlayer)
         {
             uiManager = GameObject.Find("CanvasMain").GetComponent<UIManager>();
@@ -59,13 +57,6 @@ public class Weapon : NetworkBehaviour
 
         curAmmo = maxAmmo;
         uiManager.UpdateAmmo(curAmmo, maxAmmo);
-
-        if(isServer)
-        {
-            Debug.Log("is server herro");
-            //hitTracker = GameObject.Find("HitTracker").GetComponent<HitTracking>();
-        }
-        // uiManager.UpdateAmmo(curAmmo, maxAmmo);
     }
 
     // Update is called once per frame

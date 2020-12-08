@@ -73,10 +73,9 @@ public class HitTracking : NetworkBehaviour
        if(useLatencyRewind)
        {
         latency = latency * 1000;
-         int calculatedPosition = (int)Mathf.Floor((float)(latency * 4) / (float)serverTickRate);
+         int calculatedPosition = (int)Mathf.Floor((float)(latency * 2) / (float)serverTickRate);
         if(calculatedPosition > 119) {calculatedPosition = 119;}
         calculatedPosition = 119 - calculatedPosition;
-        calculatedPosition = 0;
          Debug.Log("Calculated Position = " + (int)calculatedPosition);
 
         foreach(TrackedPlayer player in trackedPlayers)
