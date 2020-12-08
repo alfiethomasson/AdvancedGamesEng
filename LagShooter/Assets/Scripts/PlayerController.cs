@@ -1,15 +1,15 @@
 ﻿using UnityEngine;
 using Mirror;
  
+//Main Player Controller
+//Controls movement, respawn, and HP
+
 public class PlayerController : NetworkBehaviour
 {
     CharacterController characterController;
 
     [SerializeField]
     private UIManager uiManager;
-
-    [SerializeField]
-    private Transform myTransform;
 
     [SerializeField]
     private SyncPosition syncPositionScript;
@@ -29,49 +29,36 @@ public class PlayerController : NetworkBehaviour
     public int kills = 0;
     public float Gravity = 0f;
     private float velocity = 0;
-    private HealthBar hpScript;
-
     private Weapon weapon;
  
     private void Start()
     {
+        //Does not run if this is not local player
         if(!isLocalPlayer) {return;}
+        //Gets character controller for movement
         characterController = GetComponent<CharacterController>();
+        //Gets weapon script for firing 
         weapon = GetComponentInChildren<Weapon>();
+        //Get UI Manager to update HP on ui 
         uiManager = GameObject.Find("CanvasMain").GetComponent<UIManager>();
         curHP = MaxHP;
         uiManager.UpdateHealth(curHP, MaxHP);
 
+        //Gets all spawnpoints in scene
         spawnPoints = GameObject.FindGameObjectsWithTag("SpawnPoint");
     }
  
     void Update()
     {
+        //Does not run if not local player
         if (!isLocalPlayer) { return; }
-        // if(curHP == 0)
-        // {
-        //     CmdRespawn();
-        //     return;
-        // }
 
-        // if(curHP == 0)
-        // {
-        //     Debug.Log(curHP);
-        //     Debug.Log("Should die :(");
-        //     int ranSpawn = Random.Range(0, 3);
-        //     ranSpawn++;
-        //     GameObject resp = GameObject.Find("Respawn" + ranSpawn.ToString());
-        //     myTransform.position = resp.transform.position;
-        //     Debug.Log("Going to: " + resp.transform.position);
-        //     Debug.Log("This transform: " + this.transform.position);
-        //     curHP = MaxHP;
-        // }
-
-        // player movement - forward, backward, left, right
+        // Player movement - forward, backward, left, right
         float horizontal = Input.GetAxis("Horizontal") * MovementSpeed;
         float vertical = Input.GetAxis("Vertical") * MovementSpeed;
         characterController.Move((transform.right * horizontal + transform.forward * vertical) * Time.deltaTime);
         
+        //Locks/Unlocks cursor, useful for debugging 
         if(Input.GetKeyDown(KeyCode.M))
         {
             Cursor.visible = !Cursor.visible;
@@ -85,12 +72,7 @@ public class PlayerController : NetworkBehaviour
             }
         }
 
-        // if(Input.GetButtonDown ("Fire1"))
-        // {
-        //     weapon.Fire();
-        // }
-
-        // Gravity
+        // Gravity, player is always grounded in build
         if(characterController.isGrounded)
         {
             velocity = 0;
@@ -102,39 +84,42 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    //Takes damage on server
+    //Updates on all clients as hp is a syncVar
     [Server]
     public void TakeDamage(int dmg, uint shooter)
     {
         curHP -= dmg;
-        TargetTakenDamage();
+
+        //If player has less than 1 HP it has died 
         if(curHP < 1)
         {
             curHP = 0;
+
+            //Runs die script to increment deaths and ui 
             PlayerDie();
+
+            //Updates kills of the player that killed this
             NetworkIdentity.spawned[shooter].GetComponent<PlayerController>().kills++;
             NetworkIdentity.spawned[shooter].GetComponent<PlayerController>().TargetKill();
+
+            //Resets HP and calls respawn on killed client
             curHP = MaxHP;
-           // RpcRespawn();
-           TargetRespawn();
-            //CmdRespawn();
+            TargetRespawn();
         }
+
+        //Runs on the client that has taken damage
         TargetTakenDamage();
-        // if(curHP == 0)
-        // {
-        //     CmdRespawn();
-        //     return;
-        // }
-        // else
-        // {
-        //     return;
-        // }
     }
 
+    //Runs on the server if player has died
     [Server]
     public void PlayerDie()
     {
+        //Increments deaths 
         deaths++;
         Debug.Log("From server: Player has died! ");
+        //Runs this on the target that has died
         TargetDie();
     }
 
@@ -142,6 +127,7 @@ public class PlayerController : NetworkBehaviour
     void TargetDie()
     {
         Debug.Log("You died :(");
+        //Updates ui with deaths
         uiManager.UpdateDeaths(deaths);
     }
 
@@ -149,76 +135,53 @@ public class PlayerController : NetworkBehaviour
     public void TargetKill()
     {
         Debug.Log("You killed someone!");
+        //Updates ui with kills
         uiManager.UpdateKills(kills);
     }
 
     [TargetRpc]
     public void TargetTakenDamage()
     {
-        //Here u should update HP on UI.  Instead of update do it here !!
         Debug.Log("You have been damaged");
         Debug.Log("Current HP = " + curHP);
+        //Updates ui with hp after being damaged
         uiManager.UpdateHealth(curHP, MaxHP);
 
     }
 
-     public void UpdateDisplay(int prevValue, int newValue)
+    //Updates all ui elements at once
+    public void UpdateDisplay(int prevValue, int newValue)
     {
         uiManager.UpdateHealth(curHP, MaxHP);
         uiManager.UpdateDeaths(deaths);
         uiManager.UpdateKills(kills);
     }
 
-    public override void OnStartLocalPlayer()
-    {
-        //GetComponent<MeshRenderer>().material.color = Color.blue;
-    }
-
-    // [Command]
-    // void CmdRespawn()
-    // {
-    //     curHP = MaxHP;
-    //     RpcRespawn();
-    // }
-
-    [ClientRpc]
-    void RpcRespawn()
-    {
-        curHP = MaxHP;
-        if(isLocalPlayer)
-        {
-            int ranSpawn;
-            do{
-            ranSpawn = Random.Range(0, 4);
-            } while(ranSpawn == prevSpawn);
-            prevSpawn = ranSpawn;
-            ranSpawn++;
-             GameObject resp = GameObject.Find("Respawn" + ranSpawn.ToString());
-             transform.position = resp.transform.position;
-             Debug.Log("Respawning!  Chosen spawn = " + ranSpawn);
-             uiManager.UpdateHealth(curHP, MaxHP);
-        }
-    }
-
+    //Respawn script for client that has died, called on client
     [TargetRpc]
     public void TargetRespawn()
     {
-         curHP = MaxHP;
-            int ranSpawn;
+            //Resets HP
+            curHP = MaxHP;
+            int ranSpawn; 
+            //Gets a random spawn number
             do{
             ranSpawn = Random.Range(0, 4);
-            } while(ranSpawn == prevSpawn);
+            } while(ranSpawn == prevSpawn); // Ensures it wont spawn in same space as previous spawn point
             prevSpawn = ranSpawn;
-            //ranSpawn++;
-             //GameObject resp = GameObject.Find("Respawn" + ranSpawn.ToString());
-             //transform.position = resp.transform.position;
-             transform.position = spawnPoints[ranSpawn].transform.position;
-             //syncPositionScript.CmdRespawn(resp.transform.position);
-             syncPositionScript.CmdRespawn(spawnPoints[ranSpawn].transform.position);
-             Debug.Log("Respawning!  Chosen spawn = " + ranSpawn);
-             uiManager.UpdateHealth(curHP, MaxHP);
+            
+            //Sets position to spawn position
+            transform.position = spawnPoints[ranSpawn].transform.position;
+            //Call respawn function on synced position script
+            syncPositionScript.CmdRespawn(spawnPoints[ranSpawn].transform.position);
+
+            Debug.Log("Respawning!  Chosen spawn = " + ranSpawn);
+
+            //Updates UI with health after resapwn
+            uiManager.UpdateHealth(curHP, MaxHP);
     }
 
+    //Updates previous spawn 
     public void UpdatePrevSpawn(int newSpawn)
     {
         prevSpawn = newSpawn;

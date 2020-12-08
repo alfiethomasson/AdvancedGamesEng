@@ -29,6 +29,8 @@ public class SyncPosition : NetworkBehaviour
     private float threshold = 0.5f;
 
     private List<Vector3> syncPosList = new List<Vector3>();
+    
+    //Toggleable variables for different methods 
 
     [SyncVar]
     [SerializeField]
@@ -62,8 +64,7 @@ public class SyncPosition : NetworkBehaviour
     [SerializeField]
     private HitTracking hitTracker;
 
-    NetworkPingDisplay networkPingDisplay;
-
+    //Used for frame rewinding
     public Dictionary<int, Vector3> FrameData = new Dictionary<int, Vector3>();
     public List<int> Keys = new List<int>();
 
@@ -75,16 +76,21 @@ public class SyncPosition : NetworkBehaviour
 
     void Start()
     {
+        //Sets lerp rate to normal lerp rate 
         lerpRate = normLerpRate;
-        networkPingDisplay = GameObject.Find("Network Manager").GetComponent<NetworkPingDisplay>();
+
+        //Sets sync position to current position 
         syncPos = curTransform.position;
+
+        //Get hit tracker game object 
         hitTracker = GameObject.Find("HitTracker").GetComponent<HitTracking>();
     }
 
-    // Update is called once per frame
+    // Update 
     void Update()
     {
         LerpPosition();
+        //If automatic 
         if(useAutomaticToggle)
         {
         CheckPing();
@@ -96,12 +102,6 @@ public class SyncPosition : NetworkBehaviour
          RpcSendToClient();
     }
 
-    // [Command]
-    // private void CmdSendToClient()
-    // {
-    //     RpcSendToClient();
-    // }
-
     //If automatic is selected
     void CheckPing()
     {
@@ -112,54 +112,49 @@ public class SyncPosition : NetworkBehaviour
            if(!useDeadReckoning)
            {
                 CmdChangeExtrapolation(true);
-               // CmdChangeHistoricalLerp(false);
            }
-         //  Debug.Log("Above 100");
         }
         else if(NetworkTime.rtt * 1000 < 100) // If ping below 100
         {
             if(useDeadReckoning) // Then turn extrapolation off
             {
                 CmdChangeExtrapolation(false);
-                //CmdChangeHistoricalLerp(true);
             }
-            Debug.Log("Below 100");
         }
-        Debug.Log("Extrapolation on = " +  useDeadReckoning);
-        //Debug.Log("Network Time rtt * 1000 = " + (NetworkTime.rtt * 1000));
     }
 
+    //Lerp position 
     void LerpPosition()
     {
-        if(!isLocalPlayer)
+        if(!isLocalPlayer) // If not local player
         {
-            if(useHistoricalLerp)
+            if(useHistoricalLerp) // If using historical lerp 
             {
                 HistoricalLerp();
             }
             else
             {
-                NormalLerp();
+                NormalLerp(); //Normal lerp!
             }
         }
     }
 
     void NormalLerp()
     {
-        if(!overRide)
+        if(!overRide) //If override not active
         {
         if(useInterpolation)
         {
             if(useDeadReckoning)
             {
-                
-               // curTransform.position = Vector3.Lerp(curTransform.position, syncPos + pastMove, Time.deltaTime * lerpRate);
+                //Lerp position, using the estimation of next position as well
                 curTransform.position = Vector3.Lerp(curTransform.position, syncPos + (pastMove * moveSpeed * Time.deltaTime), Time.deltaTime * lerpRate);
-               // curTransform.position = Vector3.Lerp(curTransform.position, curTransform.position + (pastMove * moveSpeed * Time.deltaTime), Time.deltaTime * lerpRate);
+                //Updates previous move to equal the new move 
                 pastMove += (pastMove * moveSpeed * Time.deltaTime);
             }
             else
             {
+                //Lerp normally to new position 
                 curTransform.position = Vector3.Lerp(curTransform.position, syncPos, Time.deltaTime * lerpRate);
             }
         }
@@ -167,17 +162,18 @@ public class SyncPosition : NetworkBehaviour
         {
             if(useDeadReckoning)
             {
+                //Set position to new position estimation 
                 curTransform.position = syncPos + (pastMove * moveSpeed * Time.deltaTime);
             }
             else
             {
-                //Debug.Log("Syncing pos: cur transform = " + curTransform.position);
-               // Debug.Log("Syncing pos: sync pos = " + syncPos);
+                //Set new position 
                 curTransform.position = syncPos;
             }
         }
         if(useDeadReckoning)
         {
+            //No interpolation but extrapolation
             curTransform.position += (pastMove * moveSpeed * Time.deltaTime);
         }
         }
@@ -209,148 +205,149 @@ public class SyncPosition : NetworkBehaviour
             {
                 lerpRate = normLerpRate;
             }
-           // Debug.Log(syncPosList.Count.ToString());
         }
     }
 
+    //Called on server when player has moved 
     [Command]
     void CmdSendPosition(Vector3 pos)
     {
-        Debug.Log("SENDING POSITTION");
-        Debug.Log("here in sync pos");
+        //Updates synced position variable, updates on clients as well as it is a syncvar
         syncPos = pos;
+        //Updates the past move based on movement
         pastMove = syncPos - curTransform.position;
+        //Updates all frames in hit tracker 
         hitTracker.UpdateAllFrames();
-       // hitTracker.UpdateAllFrames();
-        //UpdateFrameData();
-        // if(useHistoricalLerp)
-        // {
-        //     syncPosList.Add(pos);
-        // }
-       // pastMove = new Vector3(pastMove.x, 0, pastMove.z);
-        //Debug.Log(pastMove);
-        //lastPos = syncPos - curTransform.position;
     }
 
+    //Called on the server to update frame data for use in rewind time 
+    //Tracks posiions of players in a dictionary and uses the framecount on the server as a key
     [Server]
     public void UpdateFrameData()
     {
-        if(!overRide)
+        if(!overRide) // If not overriding 
         {
-        //Debug.Log("Updating Frame Data");
-        if(Keys.Count > 120)
-        {
-            int key = Keys[0];
-            Keys.RemoveAt(0);
-            FrameData.Remove(key);
+            if(Keys.Count > 120) // Check if Keys list is full 
+            {
+                //If so, remove oldest variables from lists 
+                int key = Keys[0];
+                Keys.RemoveAt(0);
+                FrameData.Remove(key);
+            }
+            //Tests if value already exists 
+            Vector3 test;
+            if(FrameData.TryGetValue(Time.frameCount, out test))
+            {
+                FrameData[Time.frameCount] = curTransform.position; // Updates dictionary 
+            }
+            else
+            {
+                FrameData.Add(Time.frameCount, curTransform.position); // Adds to dicitonary if doesnt exist
+            }
+            //Adds the key to the list 
+            Keys.Add(Time.frameCount);
+            //Sends the updated frame id to all clients 
+            RpcUpdateFrameId(Time.frameCount);
         }
-        Vector3 test;
-        if(FrameData.TryGetValue(Time.frameCount, out test))
-        {
-            FrameData[Time.frameCount] = curTransform.position;
-        }
-        else
-        {
-            FrameData.Add(Time.frameCount, curTransform.position);
-        }
-        // if(FrameData[Time.frameCount] != null)
-        // {
-        //     FrameData.Remove(Time.frameCount);
-        // }
-        //FrameData.Add(Time.frameCount, curTransform.position);
-        Keys.Add(Time.frameCount);
-        RpcUpdateFrameId(Time.frameCount);
-        }
-        //Debug.Log("Adding new item tto dictionary:  At Frame Count" + Time.frameCount);
     }
 
+    //Updates the frameid at the current moment on all clients 
     [ClientRpc]
     public void RpcUpdateFrameId(int frameId)
     {
-        //Debug.Log("Updating frameid here! : " + frameid);
-        //curTransform.position = syncPos;
         frameid = frameId;
     }
 
+    //returns the frameid of the client 
     public int GetFrameId()
     {
         return frameid;
     }
 
+    //Gets most recent key 
     public int GetRecentFrameid()
     {
         return Keys[Keys.Count - 1];
     }
 
+    //Sets the transform of player to the point in the framedata dictionary
+    //Used for rewind time, setting player back to where they were at a point 
     public void SetNewTransform(int frameid)
     {
-        overRide = true;
-        Debug.Log("Trying to read for frame: " + frameid);
-        Debug.Log("Current Frame Time = " + Time.frameCount);
-        Debug.Log("Oldest Key present = " + Keys[0]);
+        overRide = true; // Sets override to true 
+        //Override is used to help consistency of shooting and raycasts (wip), still does not always work 
+        //Updates the saved position to return to afterwards 
         savedPos = curTransform.position;
-        Debug.Log("Setting this to: " + FrameData[frameid]);
-        //curTransform.position = Vector3.Lerp(FrameData[frameid], FrameData[frameid], lerpRate);
+        //Sets position to rewinded pos
         curTransform.position = FrameData[frameid];
-        overRide = true;
     }
 
+    //Resets player back to where they were
     public void ResetTransform()
     {
-        Debug.Log("curTRANSFORM on reset = " + curTransform.position);
+        //Sets position to saved position 
         curTransform.position = savedPos;
+        //Disable override 
         overRide = false;
     }
 
+    //Returns the transform of player at a specified frame 
     public Vector3 GetTransformAtFrame(int frameid)
     {
         return FrameData[frameid];
     }
     
+    //Checks for movement on player and updates others if so 
     [ClientRpc]
     void RpcSendToClient()
     {
-        if(isLocalPlayer)
+        if(isLocalPlayer) // If this is local palyer 
         {
         if(!useDeadReckoning)
         {
-        if(Vector3.Distance(curTransform.position, lastPos) > threshold)
+        if(Vector3.Distance(curTransform.position, lastPos) > threshold) // If threshold is exceeded, can add a threshold for minimum movement if network is strained
         {
-            //Debug.Log("THREHOLD EXCEEDED: last pos = " + lastPos);
-           // Debug.Log("Should send command");
+            //Send position to the server
             CmdSendPosition(curTransform.position);
+            //Updates last position to current position 
             lastPos = curTransform.position;
         }
         }
         else
         {
-           // Debug.Log("THREHOLD EXCEEDED: last pos = " + lastPos);
             CmdSendPosition(curTransform.position);
             lastPos = curTransform.position;
         }
         }
     }
 
+    //Called when syncpos is updated
     [ClientRpc]
     void RpcSyncPosValues(Vector3 oldPos, Vector3 recentPos)
     {
+        //Sets syncpos
         syncPos = recentPos;
+        //Updates the previous move 
         pastMove = syncPos - oldPos;
-        // if(useHistoricalLerp)
-        // {
-        // syncPosList.Add(syncPos);
-        // }
     }
 
+    //Called on server when player needs to respawn 
+    //Still buggy 
     [Command]
     public void CmdRespawn(Vector3 newPos)
     {
         if(!overRide)
         {
+        //Sets position 
         syncPos = newPos;
         curTransform.position = newPos;
         }
     }
+
+    /*
+    All of the following functions update their respective  variables on all instances
+    Also updates the toggle on the UI to reflect this 
+    */
 
     [ClientRpc]
     public void RpcChangeHistoricalLerp(bool isOn)
@@ -358,12 +355,9 @@ public class SyncPosition : NetworkBehaviour
         if(!isLocalPlayer)
         {
         syncPosList.Clear();
-      //  useHistoricalLerp = isOn;
-        //Debug.Log("Calling on this client!");
         }
         else
         {
-            //Debug.Log("Calling on this client!");
             CmdChangeHistoricalLerp(isOn);
             Toggle tog = GameObject.Find("HistoricalLerp").GetComponent<Toggle>();
             tog.isOn = isOn;
@@ -375,12 +369,10 @@ public class SyncPosition : NetworkBehaviour
     {
         if(!isLocalPlayer)
         {
-           // Debug.Log("Calling on this client!");
             useInterpolation = isOn;
         }
         else
         {
-           // Debug.Log("Calling on this client!");
            CmdChangeInterpolation(isOn);
            Toggle tog = GameObject.Find("Interpolation").GetComponent<Toggle>();
            tog.isOn = isOn;
@@ -392,15 +384,13 @@ public class SyncPosition : NetworkBehaviour
     {
         if(!isLocalPlayer)
         {
-           // Debug.Log("Calling on this client!");
             useDeadReckoning = isOn;
         }
         else
         {
-            //Debug.Log("Calling on this client!");
             CmdChangeExtrapolation(isOn);
             Toggle tog = GameObject.Find("Extrapolation").GetComponent<Toggle>();
-           tog.isOn = isOn;
+            tog.isOn = isOn;
         }
     }
 
@@ -409,12 +399,10 @@ public class SyncPosition : NetworkBehaviour
     {
         if(!isLocalPlayer)
         {
-           // Debug.Log("Calling on this client!");
             useFrameRewind = isOn;
         }
         else
         {
-            //Debug.Log("Calling on this client!");
             CmdChangeFrameRewind(isOn);
             Toggle tog = GameObject.Find("FrameRewind").GetComponent<Toggle>();
            tog.isOn = isOn;
@@ -426,15 +414,13 @@ public class SyncPosition : NetworkBehaviour
     {
         if(!isLocalPlayer)
         {
-           // Debug.Log("Calling on this client!");
             useLatencyRewind = isOn;
         }
         else
         {
-            //Debug.Log("Calling on this client!");
             CmdChangeLatencyRewind(isOn);
             Toggle tog = GameObject.Find("LatencyRewind").GetComponent<Toggle>();
-           tog.isOn = isOn;
+            tog.isOn = isOn;
         }
     }
 
@@ -443,7 +429,6 @@ public class SyncPosition : NetworkBehaviour
     {
         if(!isLocalPlayer)
         {
-           // Debug.Log("Calling on this client!");
             useAutomaticToggle = isOn;
             if(useAutomaticToggle)
             {
@@ -454,10 +439,8 @@ public class SyncPosition : NetworkBehaviour
         }
         else
         {
-            //Debug.Log("Calling on this client!");
             CmdChangeAutomatic(isOn);
             CmdChangeInterpolation(isOn);
-           // CmdChangeHistoricalLerp(isOn);
             Toggle tog = GameObject.Find("Automatic").GetComponent<Toggle>();
             tog.isOn = isOn;
         }
@@ -468,7 +451,7 @@ public class SyncPosition : NetworkBehaviour
     {
         useHistoricalLerp = isOn;
         Toggle tog = GameObject.Find("HistoricalLerp").GetComponent<Toggle>();
-            tog.isOn = isOn;
+        tog.isOn = isOn;
     }
 
     [Command]
@@ -476,7 +459,7 @@ public class SyncPosition : NetworkBehaviour
     {
         useInterpolation = isOn;
         Toggle tog = GameObject.Find("Interpolation").GetComponent<Toggle>();
-            tog.isOn = isOn;
+        tog.isOn = isOn;
     }
 
     [Command]
@@ -484,7 +467,7 @@ public class SyncPosition : NetworkBehaviour
     {
         useDeadReckoning = isOn;
         Toggle tog = GameObject.Find("Extrapolation").GetComponent<Toggle>();
-            tog.isOn = isOn;
+        tog.isOn = isOn;
     }
 
     [Command]

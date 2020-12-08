@@ -4,36 +4,23 @@ using UnityEngine;
 using Mirror;
 using UnityEngine.UI;
 
+//Short main menu script to start or stop server
+
 public class MainMenu : MonoBehaviour
 {
 
     [SerializeField] 
     private LobbyManager networkManager = null;
 
-    [SerializeField]
-    private GameObject landingPagePanel = null;
-
     public void HostLobby()
     {
-        networkManager.StartServer();
-       // landingPagePanel.SetActive(false);
+        //Start server
+        networkManager.StartServer(); 
     }
 
     public void StopLobby()
     {
+        //Stop Server
         networkManager.StopServer();
     }
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
 }

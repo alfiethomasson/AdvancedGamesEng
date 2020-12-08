@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using Mirror;
  
+//Script to look around scene with mouse
+
 public class MouseHandler : NetworkBehaviour
 {
     // horizontal rotation speed
@@ -12,23 +14,30 @@ public class MouseHandler : NetworkBehaviour
     private float xRotation = 0.0f;
     private float yRotation = 0.0f;
     private Camera cam;
-    private GameObject player;
     
     void Start()
     {
+        //Gets camera attached to this player
         cam = this.GetComponentInChildren<Camera>();
+
+        //If the client has authority over camera (local player)
         if(hasAuthority)
         {
-        Camera serverCam = GameObject.Find("ServerCam").GetComponent<Camera>();
-        serverCam.enabled = false;
-        cam.enabled = true;
+            //Finds server camera
+            Camera serverCam = GameObject.Find("ServerCam").GetComponent<Camera>();
+            //... and disables it
+            serverCam.enabled = false;
+            //but enables this one for the player!
+            cam.enabled = true;
         }
 
     }
  
     void Update()
     {
-        if(!hasAuthority) { return;}
+        if(!hasAuthority) { return;} // Does not run if no authority
+
+        //Get inputs for looking around 
         float mouseX = Input.GetAxis("Mouse X") * horizontalSpeed;
         float mouseY = Input.GetAxis("Mouse Y") * verticalSpeed;
  
@@ -36,16 +45,10 @@ public class MouseHandler : NetworkBehaviour
         xRotation -= mouseY;
         xRotation = Mathf.Clamp(xRotation, -90, 90);
  
+        //Moves camera around 
         cam.transform.eulerAngles = new Vector3(xRotation, yRotation, 0.0f);
+        //Moves player transform based on camera
         this.transform.rotation = cam.transform.rotation;
-       // CmdSendRotate(xRotation, yRotation);
-     // player.transform.eulerAngles = new Vector3(xRotation, 0.0f, 0.0f);
-    }
-
-    [Command]
-    void CmdSendRotate(float xRotation, float yRotation)
-    {
-        RpcCharacterRotate(xRotation, yRotation);
     }
 
     [ClientRpc]

@@ -7,6 +7,8 @@ using UnityEngine.SceneManagement;
 using System.Linq;
 using System;
 
+//Custom Network Manager class
+
 public class LobbyManager : NetworkManager
 {
     [Scene]
@@ -32,115 +34,134 @@ public class LobbyManager : NetworkManager
     public List<NetworkRoomPlayerLobby> RoomPlayers {get;} = new List<NetworkRoomPlayerLobby>();
     public List<NetworkGamePlayerLobby> GamePlayers {get;} = new List<NetworkGamePlayerLobby>();
 
-    int countdownInt;
     public bool countdownActive = false;
     public float defaultCountDown = 5.0f;
     public float countdownTime = 5.0f;
 
-    public string playerName;
-
+    //Runs on the server when it starts
     public override void OnStartServer()
     {
+        //Registers prefabs in SpawnablePrefabs folder, needed to spawn objects on the server
         List<GameObject> spawnPrefabs = Resources.LoadAll<GameObject>("SpawnablePrefabs").ToList();
     }
 
+    //Runs on client when it starts
     public override void OnStartClient()
     {
         Debug.Log("Trying to start client");
-         var spawnablePrefabs = Resources.LoadAll<GameObject>("SpawnablePrefabs");
-            Debug.Log(spawnablePrefabs.Count());
-            foreach (var prefab in spawnablePrefabs)
-            {
-                ClientScene.RegisterPrefab(prefab);
-            }
+        //Gets all spawnable prefabs
+        var spawnablePrefabs = Resources.LoadAll<GameObject>("SpawnablePrefabs");
+        foreach (var prefab in spawnablePrefabs)
+        {
+            //For each, register to the network manager
+            //This is needed to spawn objects on the server and have them synced to the client
+            ClientScene.RegisterPrefab(prefab);
+        }
     }
 
+    //When Server stops
     public override void OnStopServer()
     {
-        RoomPlayers.Clear();
+        RoomPlayers.Clear(); // Clear player list
     }
 
+    //When client trys to conncet
     public override void OnClientConnect(NetworkConnection connection)
     {
         Debug.Log("Client Attempting to Connect");
+        //Call base function
         base.OnClientConnect(connection);
 
         OnClientConnected?.Invoke();
     }
 
+    //Called when something connects to server
     public override void OnServerConnect(NetworkConnection connection)
     {
+        //If server full
         if(numPlayers >= maxConnections)
         {
+            //Disconnect attempted connector
             connection.Disconnect();
             return;
         }
     }
 
+    //When player disconnects 
     public override void OnServerDisconnect(NetworkConnection connection)
     {
+        //If player exists
         if(connection.identity != null)
         {
+            //In lobby, get player object
             var player = connection.identity.GetComponent<NetworkRoomPlayerLobby>();
 
+            //Remove from lobby list
             RoomPlayers.Remove(player);
 
+            //Update players
             NotifyPlayer();
         }
 
+        //Call base function
         base.OnServerDisconnect(connection);
     }
+
+    //When server succesfully adds a player
    public override void OnServerAddPlayer(NetworkConnection connection)
     {
-        Debug.Log("Should add player");
-    
-        // if(SceneManager.GetActiveScene().name == menuScene)
-        // {
-            Debug.Log("Should spawn!");
+        Debug.Log("Should spawn!");
 
-            bool isLeader = RoomPlayers.Count == 0;
+        //Assign first joined player as lobby leader
+        bool isLeader = RoomPlayers.Count == 0;
 
-            NetworkRoomPlayerLobby roomPlayerInstance = Instantiate(roomPlayerPrefab);
+        //Instantiate room player object
+        NetworkRoomPlayerLobby roomPlayerInstance = Instantiate(roomPlayerPrefab);
 
-            roomPlayerInstance.IsLeader = isLeader;
+        //Sets this player as leader or not leader
+        roomPlayerInstance.IsLeader = isLeader;
 
-            NetworkServer.AddPlayerForConnection(connection, roomPlayerInstance.gameObject);
-    //    }
+        //Adds instantiated object to the connection, it is now the player for that connection
+        NetworkServer.AddPlayerForConnection(connection, roomPlayerInstance.gameObject);
     }
 
+    //Only needed if using leader starts game
+    //This build has server starting automatically if players are ready
     public void NotifyPlayer()
     {
+        //Loops through all players
         foreach(var player in RoomPlayers)
         {
+            //Checks if ready to start and if so, allows leader to start game
             player.HandleReadyToStart(IsReadyStart());
         }
     }
 
+    //Checks if all players are ready to start
     private bool IsReadyStart()
     {
-        if(RoomPlayers.Count < minPlayers) { Debug.Log("False bc not enough players"); 
-        Debug.Log("num players = " + RoomPlayers.Count); return false; }
+        //Checks if there are enough players to start 
+        if(RoomPlayers.Count < minPlayers) { Debug.Log("False, not enough players"); return false; }
 
-        Debug.Log("RoomPlayers size = " + RoomPlayers.Count);
-
+        //Loops through all palyers
         foreach(var player in RoomPlayers)
         {
-            if(!player.IsReady) {Debug.Log("False bc player not ready: " + player.DisplayName);
-            return false;}
+            //Checks if player is ready
+            if(!player.IsReady) {Debug.Log("False, player not ready: " + player.DisplayName); return false;} // If not, return false
         }
 
+        //If all players are ready, return true
         return true;
     }
 
+    //Start game function to begin game starting
     public void StartGame()
     {
-       // Debug.Log("In start game");
-        if(SceneManager.GetActiveScene().name == menuScene)
+        if(SceneManager.GetActiveScene().name == menuScene) // If scene is the menuscene
         {
-          //  Debug.Log("Menu Scene correct");
-            if(!IsReadyStart()) 
+            if(!IsReadyStart()) //Check if players are ready to start
             {
-                //playerName = PlayerNameInput.DispName;
+                //If not ready, countdown is not active 
                 countdownActive = false;
                 countdownTime = defaultCountDown;
                 for(int i = 0; i < RoomPlayers.Count; i++)
@@ -151,42 +172,44 @@ public class LobbyManager : NetworkManager
             }
             else
             {
-
                 Debug.Log("Ready to start!");
+                //Set countdown to active!
                 countdownActive = true;
                 for(int i = 0; i < RoomPlayers.Count; i++)
                 {
                     RoomPlayers[i].countdownActive = true;
                 }
-               // ServerChangeScene("GameScene");
             }
-        }
-        else
-        {
-            Debug.Log("Scene manager name = " + SceneManager.GetActiveScene().name);
-            Debug.Log("Menu scene name = " + menuScene);
         }
     }
 
+    //Begin Scene change!
     public override void ServerChangeScene(string newScene)
     {
+        //If going from menu to game
         if(SceneManager.GetActiveScene().name == menuScene && newScene == "GameScene")
         {
-           // CmdChangeScene(newScene);
-            Debug.Log("Room players count = " + RoomPlayers.Count);
+            //Stop Countdown
             countdownActive = false;
+            //Loop through all players backwards to stop errors occuring
             for(int i = RoomPlayers.Count - 1; i >= 0; i--)
             {
-                Debug.Log("I =" + i);
+                //Get players connection
                 var connection = RoomPlayers[i].connectionToClient;
-                var gameplayerInstance = Instantiate(gamePlayerPrefab);
-               // Debug.Log("RoomPlayers I = " + RoomPlayers[i].DisplayName);
-                 gameplayerInstance.SetDisplayName(RoomPlayers[i].DisplayName);
 
+                //Spawn intermediatery game prefab!
+                var gameplayerInstance = Instantiate(gamePlayerPrefab);
+                //Set display name to player name
+                gameplayerInstance.SetDisplayName(RoomPlayers[i].DisplayName);
+
+                //Destroy current game object attached to player
                 NetworkServer.Destroy(connection.identity.gameObject);
 
+                //And replace the player object with the new one!
                 NetworkServer.ReplacePlayerForConnection(connection, gameplayerInstance.gameObject, true);
             }
+
+            //Call base change scene
             base.ServerChangeScene(newScene);
         }
     }
@@ -198,29 +221,37 @@ public class LobbyManager : NetworkManager
         OnServerReadied?.Invoke(connection);
     }
 
+    //When scene is changed, this is called ons erver
     public override void OnServerSceneChanged(string sceneName)
     {
-        if(sceneName == menuScene)
+        if(sceneName == menuScene) // check if current scene equals the menu
         {
+            //Spawn the spawn system used for creating the proper player prefabs
             GameObject playerSpawnSystem = Instantiate(spawnSystem);
+            //Spawns on the network server which spawns on clients as well
             NetworkServer.Spawn(playerSpawnSystem);
         }
     }
 
+    //Only runs update on the server 
     [Server]
     void Update()
     {
-        if(countdownActive && SceneManager.GetActiveScene().name == menuScene)
+        if(countdownActive && SceneManager.GetActiveScene().name == menuScene) // Checks if countdown is active and scene is menu
         {
-            //Debug.Log("Countdown active!");
+            //Decrements countdown time
             countdownTime -= Time.deltaTime;
-            //Debug.Log("Countdown time = " + countdownTime);
+
+            //Updates all clients with countdown time
             for(int i = 0; i < RoomPlayers.Count; i++)
             {
                 RoomPlayers[i].countdownTime = (int)countdownTime;
             }
+
+            //If countdown has ended
             if(countdownTime < 0)
             {
+                //Change the scene
                 ServerChangeScene("GameScene");
                 countdownActive = false;
             }

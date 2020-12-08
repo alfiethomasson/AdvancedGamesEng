@@ -22,11 +22,6 @@ public class Weapon : NetworkBehaviour
     [SerializeField]
     private UIManager uiManager;
 
-    [SyncVar]
-    Vector3 rayPoint;
-    [SyncVar]
-    bool rayActive;
-
     [SyncVar (hook = nameof(UpdateAmmoDisplay))]
     public int curAmmo;
 
@@ -35,20 +30,21 @@ public class Weapon : NetworkBehaviour
     private Camera fpsCam;
     private LineRenderer laser;
     private float nextShot;
-    private float killcounter = 0;
-    private Text killText;
-
     private bool isReloading = false;
 
     public SyncPosition syncPosParent;
 
-    // Start is called before the first frame update
     void Start()
     {
+        //Gets linerenderer component to display shot paths
         laser = GetComponent<LineRenderer>();
+        //Gets camera attached to same player
         fpsCam = GetComponentInChildren<Camera>();
+
         hitTrackerGameObject = GameObject.Find("HitTracker");
         hitTracker = hitTrackerGameObject.GetComponent<HitTracking>();
+
+        //Checks if local player and if so assigns canvas (used for reloading) and movement sync script
         if(isLocalPlayer)
         {
             uiManager = GameObject.Find("CanvasMain").GetComponent<UIManager>();
@@ -59,78 +55,58 @@ public class Weapon : NetworkBehaviour
         uiManager.UpdateAmmo(curAmmo, maxAmmo);
     }
 
-    // Update is called once per frame
     void Update()
     {
-       if(!isLocalPlayer) { return;}
-       /*  RaycastHit hit;
-            laser.SetPosition(0, muzzle.position);
-            Vector3 rayOrigin = fpsCam.ViewportToWorldPoint (new Vector3(0.5f, 0.5f, 0.0f));
-            if (Physics.Raycast(rayOrigin,fpsCam.transform.forward, out hit, range))
-            {
-                laser.SetPosition(1, hit.point);
-            }
-            else
-            {
-                laser.SetPosition(1, fpsCam.transform.forward * range);
-            }*/
+        //Do not run update if not local player
+        if(!isLocalPlayer) { return;}
+
+        //Reload 
         if(Input.GetKeyDown(KeyCode.R) && !isReloading)
         {
             isReloading = true;
             StartCoroutine(Reload());
         }
 
-
         //Fire weapon!
         if (Input.GetButtonDown ("Fire1") && ReadyToFire()) 
         {
+            //Ensures the frameid is up to date
             CmdUpdateAllFrames();
-            Debug.Log("FIRING MY LAZOR!");
+
+            //Reset time to fire
             nextShot = Time.time + firerate;
-            //StartCoroutine(Shot());
-          //  laser.SetPosition(0, muzzle.position);
+            
+            // Gets point to start raycast from, middle of camera
             Vector3 rayOrigin = fpsCam.ViewportToWorldPoint (new Vector3(0.5f, 0.5f, 0.5f));
+
+            //Current latency
             double latencyTime = NetworkTime.rtt;
-           // laser.SetPosition(0, muzzle.position);
-           curAmmo--;
-           uiManager.UpdateAmmo(curAmmo, maxAmmo);
-           RaycastHit hit;
-           Physics.Raycast(rayOrigin, fpsCam.transform.forward, out hit);
-           Debug.Log("Hit: " + hit.collider.tag);
-           //float frameTime = Time.frameCount;
-           float frameTime = syncPosParent.GetFrameId();
-            GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
-            for(int i = 0; i < players.Length; i++)
+
+            //Updates ammo count
+            curAmmo--;
+            uiManager.UpdateAmmo(curAmmo, maxAmmo);
+
+            //Local raycast to check hits on player screen, not server authorative
+            RaycastHit hit;
+            Physics.Raycast(rayOrigin, fpsCam.transform.forward, out hit);
+            Debug.Log("Hit: " + hit.collider.tag);
+
+            //Gets current frameid
+            float frameTime = syncPosParent.GetFrameId();
+
+            //Move red capsule to hit point, shows where shot player was on local screen
+            if(hit.collider.tag == "PlayerBody")
             {
-                Debug.Log("Position of player " + i + " at time of shooting: " + players[i].transform.position);
-            }
-           if(hit.collider.tag == "PlayerBody")
-           {
                Debug.Log("Hit on local client");
-               //hitTracker.CmdMoveShotGameObject(hit.collider.gameObject.transform.parent.transform.position);
                CmdBeginMove(hit.collider.gameObject.transform.parent.transform.position);
-           }
+            }
+
+            //Begins server check of raycast
             CmdCheckShot(latencyTime, rayOrigin, fpsCam.transform.forward, frameTime);
-            // if (Physics.Raycast(rayOrigin,fpsCam.transform.forward, out hit, range))
-            // {
-            //     laser.SetPosition(1, hit.point);
-            //     if(hit.collider.tag == "PlayerBody")
-            //     {
-            //         Debug.Log("Hit Player");
-            //         dealDamage(hit);
-            //     }
-            //     else
-            //     {
-            //         Debug.Log("I hit: " + hit.collider.tag);
-            //     }
-            // }
-            // else
-            // {
-            //     laser.SetPosition(1, fpsCam.transform.forward * range);
-            // }
         }
     }
 
+    //Begins updates frameid on all clients
     [Command]
     public void CmdUpdateAllFrames()
     {
@@ -145,6 +121,7 @@ public class Weapon : NetworkBehaviour
         hitTracker.RpcMoveShotGameObject(toMove);
     }
 
+    //Returns true/false depending on whether player is able to fire or not
     private bool ReadyToFire()
     {
         if(Time.time > nextShot && curAmmo > 0 && !isReloading)
@@ -157,45 +134,32 @@ public class Weapon : NetworkBehaviour
         }
     }
 
+    //Begins server check of raycast to see if it hits a player
     [Command]
     public void CmdCheckShot(double latency, Vector3 rayOrigin, Vector3 rayPoint, float framecount)
     {
+        //Runs the hit tracking script (used for rewind time)
         RaycastHit hit;
-        // laser.SetPosition(0, muzzle.position);
-        //Debug.Log("heyo");
         hit = hitTracker.BeginComputeHit(latency, rayOrigin, rayPoint, framecount);
 
+        //Sets the linerenderer on the server
         laser.SetPosition(0, muzzle.position);
         laser.SetPosition(1, hit.point);
-        //RpcShowLine(hit.point);
-       // Debug.DrawRay(rayOrigin, fpsCam.transform.forward * 500, Color.red, 5.0f);
-       // Vector3 rayLine = muzzle.position + (fpsCam.transform.forward * 25);
-        // Gizmos.color = Color.red;
-        // Gizmos.DrawLine(muzzle.position, rayLine);
-        Debug.Log("heyo2");
         Debug.Log("I hit: " + hit.collider.tag);
-        RpcPlayerShot(GetComponent<NetworkIdentity>().netId, hit.point, hit.normal);
-         if (hit.collider.tag == "PlayerBody")
-            {
-               // Debug.DrawRay(rayOrigin, fpsCam.transform.forward, Color.green, 1);
-                //laser.SetPosition(1, hit.point);
-              // RpcShowLine(hit.transform.position);
-                   // dealDamage(hit);
-                  // hitTracker.RpcMoveShotGameObject(hitClient.collider.gameObject.transform.parent.transform.position);
-                   GameObject enemy = hit.collider.gameObject;
-                   PlayerController enemyController = enemy.GetComponentInParent<PlayerController>();
-                   enemyController.TakeDamage(40, GetComponentInParent<NetworkIdentity>().netId);
-                    Debug.Log("I hit: " + hit.collider.tag);
-            }
-            else
-            {
-              //  RpcShowLine(hit.transform.position);
-                //laser.SetPosition(1, fpsCam.transform.forward * range);
-                //RpcShowLine(fpsCam.transform.forward * range);
-              //  RpcShowLine(fpsCam.transform.forward * range);
-            }
 
-         RpcClientLine(hit.point);   
+        //Calls script to instantiate bullet hole on local clients
+        RpcPlayerShot(GetComponent<NetworkIdentity>().netId, hit.point, hit.normal);
+
+        //If hit object is player then deal damage
+         if (hit.collider.tag == "PlayerBody")
+        {
+            GameObject enemy = hit.collider.gameObject;
+            PlayerController enemyController = enemy.GetComponentInParent<PlayerController>();
+            enemyController.TakeDamage(40, GetComponentInParent<NetworkIdentity>().netId);
+        }
+
+        //Renders shot line on clients 
+        RpcClientLine(hit.point);   
     }
 
     [ClientRpc]
@@ -204,46 +168,33 @@ public class Weapon : NetworkBehaviour
         Instantiate(bulletHitPrefab, impactPos + impactRot * 0.1f, Quaternion.LookRotation(impactRot));
     }
 
+    //Moves the shot linerenderer to updates position on clients
     [ClientRpc]
     private void RpcClientLine(Vector3 toShoot)
     {
-        Debug.Log("Trying to show line");
+        Debug.Log("Trying to update line");
         laser.SetPosition(0, muzzle.position);
         laser.SetPosition(1, toShoot);
-      // laser.SetPosition(1, new Vector3(0.0f, 0.0f, 0.0f));
-        waitShot();
-    }
 
-    [Server]
-    public void RpcShowLine(Vector3 hitPos)
-    {
-       // rayPoint = hitPos;
-         rayPoint = hitPos;
-        laser.SetPosition(1, hitPos);
-       // RpcClientLine();
+        //If shot is to disappear after a while, this would enable/disable laser
+        waitShot();
     }
 
     private IEnumerator waitShot()
     {
         laser.enabled = true;
         yield return shotDuration;
-       // laser.enabled = false;
+        //laser.enabled = false;
     } 
 
+    //Updates ammo count on UI
     public void UpdateAmmoDisplay(int oldVal, int newVal)
     {
         Debug.Log("Trying to update ammo");
         uiManager.UpdateAmmo(curAmmo, maxAmmo);
     }
 
-    // private IEnumerator Shot()
-    // {
-
-    //     //laser.enabled = true;
-    //     yield return shotDuration;
-    //     //laser.enabled = false;
-    // }
-
+    //Runs reload concurrently, reloads 1 bullet every 0.3 seconds
     private IEnumerator Reload()
     {
         while(curAmmo != maxAmmo)
@@ -253,29 +204,5 @@ public class Weapon : NetworkBehaviour
             uiManager.UpdateAmmo(curAmmo, maxAmmo);
         }
         isReloading = false;
-    }
-
-    void dealDamage(RaycastHit hit)
-    {
-       // PlayerController enemy = hit.collider.GetComponentInParent<PlayerController>();
-       GameObject enemy = hit.collider.gameObject;
-       GameObject enemyparent = enemy.transform.parent.gameObject;
-       killcounter++;
-       GameObject.Find("HitCounter").GetComponent<Text>().text = killcounter.ToString();
-       SendDamage(enemyparent);
-        //enemy.curHP -= 1;
-    }
-
-    //Sends command to all instances of the player
-    [Command]  
-    void SendDamage(GameObject enemy)
-    {
-        // bool isKill = enemy.GetComponent<PlayerController>().TakeDamage(1);
-        // if(isKill)
-        // {
-        //     killcounter++;
-        //     killText = GameObject.Find("KillCounter").GetComponent<Text>();
-        //     killText.text = killcounter.ToString();
-        // }
     }
 }
