@@ -163,7 +163,7 @@ public class SyncRotation : NetworkBehaviour
         syncCamRotation = camRot;
     }
 
-    [ClientRpc]
+    [ClientCallback]
     void RpcSendToClient()
     {
         if(isLocalPlayer)
@@ -177,7 +177,7 @@ public class SyncRotation : NetworkBehaviour
         }
     }
 
-    [ClientRpc]
+    [ClientCallback]
     void RpcPlayerRotationSync(float oldrot, float newrot)
     {
         syncPlayerRotation = newrot;
@@ -187,7 +187,7 @@ public class SyncRotation : NetworkBehaviour
         }
     }
 
-    [ClientRpc]
+    [ClientCallback]
     void RpcCamRotationSync(float oldrot, float newrot)
     {
         syncCamRotation = newrot;

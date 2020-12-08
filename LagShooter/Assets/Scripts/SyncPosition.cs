@@ -298,7 +298,7 @@ public class SyncPosition : NetworkBehaviour
     }
     
     //Checks for movement on player and updates others if so 
-    [ClientRpc]
+    [ClientCallback]
     void RpcSendToClient()
     {
         if(isLocalPlayer) // If this is local palyer 
@@ -322,7 +322,7 @@ public class SyncPosition : NetworkBehaviour
     }
 
     //Called when syncpos is updated
-    [ClientRpc]
+    [ClientCallback]
     void RpcSyncPosValues(Vector3 oldPos, Vector3 recentPos)
     {
         //Sets syncpos

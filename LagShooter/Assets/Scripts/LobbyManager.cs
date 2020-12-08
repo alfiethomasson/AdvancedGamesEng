@@ -236,7 +236,7 @@ public class LobbyManager : NetworkManager
     }
 
     //Only runs update on the server 
-    [Server]
+    [ServerCallback]
     void Update()
     {
         if(countdownActive && SceneManager.GetActiveScene().name == menuScene) // Checks if countdown is active and scene is menu

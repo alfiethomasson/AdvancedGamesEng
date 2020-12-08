@@ -46,7 +46,7 @@ public class HitTracking : NetworkBehaviour
     }
 
     //Update only called on server
-    [Server]
+    [ServerCallback]
     void Update()
     {
         if(useLatencyRewind) //If latency rewind is active

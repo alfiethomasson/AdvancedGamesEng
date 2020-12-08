@@ -85,10 +85,8 @@ public class NameTag : NetworkBehaviour
         }
     }
 
-   // [Command]
     public void UpdateAllTags()
     {
-        Debug.Log("Called command");
         GameObject[] players;
         players = GameObject.FindGameObjectsWithTag("Player");
          foreach(GameObject p in players)
